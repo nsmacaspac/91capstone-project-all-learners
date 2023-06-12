@@ -1,7 +1,7 @@
 ---
 title: "Recommendation System Developed on the Baseline Estimates of the MovieLens 10M Dataset"
 author: "Nicelle Sernadilla Macaspac"
-date: "`r Sys.Date()`"
+date: "June 2023"
 output: pdf_document
 ---
 
@@ -9,25 +9,142 @@ output: pdf_document
 ```{r setup, include = FALSE}
 if(!require(knitr)) install.packages("knitr", repos = "http://cran.us.r-project.org")
 library(knitr)
-opts_chunk$set(echo = FALSE)
+opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
 ```
 
 
 ## Introduction
 
 
-[MovieLens 10M Dataset](https://grouplens.org/datasets/movielens/10m/)
+[MovieLens 10M Dataset](https://grouplens.org/datasets/movielens/10m/) (Harper and Konstan 2015)
+
+
+```{r}
+##########################################################
+# Create edx and final_holdout_test sets
+##########################################################
+
+# Note: this process could take a couple of minutes
+
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org") # require() checks if the package exists
+if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
+
+library(tidyverse)
+library(caret)
+
+# MovieLens 10M dataset:
+# https://grouplens.org/datasets/movielens/10m/
+# http://files.grouplens.org/datasets/movielens/ml-10m.zip
+
+options(timeout = 120) # timeout in seconds for some Internet operations
+
+dl <- "ml-10M100K.zip"
+if(!file.exists(dl))
+  download.file("https://files.grouplens.org/datasets/movielens/ml-10m.zip", dl)
+
+ratings_file <- "ml-10M100K/ratings.dat"
+if(!file.exists(ratings_file))
+  unzip(dl, ratings_file)
+
+movies_file <- "ml-10M100K/movies.dat"
+if(!file.exists(movies_file))
+  unzip(dl, movies_file)
+
+ratings <- as.data.frame(str_split(read_lines(ratings_file), fixed("::"), simplify = TRUE),
+                         stringsAsFactors = FALSE)
+colnames(ratings) <- c("userId", "movieId", "rating", "timestamp")
+ratings <- ratings %>%
+  mutate(userId = as.integer(userId),
+         movieId = as.integer(movieId),
+         rating = as.numeric(rating),
+         timestamp = as.integer(timestamp))
+
+movies <- as.data.frame(str_split(read_lines(movies_file), fixed("::"), simplify = TRUE),
+                        stringsAsFactors = FALSE)
+colnames(movies) <- c("movieId", "title", "genres")
+movies <- movies %>%
+  mutate(movieId = as.integer(movieId))
+
+movielens <- left_join(ratings, movies, by = "movieId")
+# 'data.frame':	10000054 obs. of  6 variables:
+# $ userId   : int  1 1 1 1 1 1 1 1 1 1 ...
+# $ movieId  : int  122 185 231 292 316 329 355 356 362 364 ...
+# $ rating   : num  5 5 5 5 5 5 5 5 5 5 ...
+# $ timestamp: int  838985046 838983525 838983392 838983421 838983392 838983392 838984474 838983653 838984885 838983707 ...
+# $ title    : chr  "Boomerang (1992)" "Net, The (1995)" "Dumb & Dumber (1994)" "Outbreak (1995)" ...
+# $ genres   : chr  "Comedy|Romance" "Action|Crime|Thriller" "Comedy" "Action|Drama|Sci-Fi|Thriller" ...
+
+# Final hold-out test set will be 10% of MovieLens data
+set.seed(1, sample.kind="Rounding") # if using R 3.6 or later
+# set.seed(1) # if using R 3.5 or earlier
+test_index <- createDataPartition(y = movielens$rating, times = 1, p = 0.1, list = FALSE)
+edx <- movielens[-test_index,]
+temp <- movielens[test_index,]
+
+# Make sure userId and movieId in final hold-out test set are also in edx set
+final_holdout_test <- temp %>%
+  semi_join(edx, by = "movieId") %>%
+  semi_join(edx, by = "userId")
+
+# Add rows removed from final hold-out test set back into edx set
+removed <- anti_join(temp, final_holdout_test)
+edx <- rbind(edx, removed)
+
+rm(dl, ratings, movies, test_index, temp, movielens, removed)
+```
 
 
 ## Analysis
 
 
-## Result
+"Typical CF data exhibit large user and item effects - i.e, systematic tendencies for some users to give higher ratings than others, and for some items to receive higher ratings than others." (Koren 2008, 427)
+
+
+"The dataset does not only tell us the rating values, but also which movies users rate, regardless of how they rated these movies." (Koren 2008, 427)
+
+
+"All users selected had rated at least 20 movies." (GroupLens, n.d.)
+
+
+## Developing a Recommendation System Based on Baseline Estimates 
+
 
 $E = mc^{2}$
 
 
+"In order to combat overfitting the sparse rating data, models are regularized  so estimates are shrunk towards baseline defaults. Regularization is controlled by constants, which are denoted as: lambda1, lambda2, ..." (Koren 2008, 427)
+
+
+<TABLE 1> (Madhugiri, 2022)
+
+
+"In practice, we often report the root mean squared error (RMSE), because it is in the same units as the outcomes." (Irizarry, 2019)
 
 
 ## Conclusion
+
+
+"In this paper, we suggested methods that lower the RMSE to 0.8870."
+
+
+"However, they are entered manually, so errors and inconsistencies may exist." (GroupLens, n.d.)
+
+
+<LIMIT: RECURRING TIME>
+
+
+<INTERESTING NOTE: COVID YEARS>
+
+
+"in others our success is restricted by the randomness of the process, with movie recommendations for example." (Irizarry, 2019)
+
+
+## Reference
+
+
+Harper, F. Maxwell, and Joseph A. Konstan. 2015. "The MovieLens Datasets: History and Context." _ACM Transactions on Interactive Intelligent Systems_ 5, no. 4: 1-19. https://doi.org/10.1145/2827872.
 
