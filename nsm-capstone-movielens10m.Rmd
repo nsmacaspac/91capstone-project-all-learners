@@ -1,0 +1,33 @@
+---
+title: "Recommendation System Developed on the Baseline Estimates of the MovieLens 10M Dataset"
+author: "Nicelle Sernadilla Macaspac"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+
+```{r setup, include = FALSE}
+if(!require(knitr)) install.packages("knitr", repos = "http://cran.us.r-project.org")
+library(knitr)
+opts_chunk$set(echo = FALSE)
+```
+
+
+## Introduction
+
+
+[MovieLens 10M Dataset](https://grouplens.org/datasets/movielens/10m/)
+
+
+## Analysis
+
+
+## Result
+
+$E = mc^{2}$
+
+
+
+
+## Conclusion
+
