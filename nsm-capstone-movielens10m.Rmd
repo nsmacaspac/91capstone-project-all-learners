@@ -1,5 +1,5 @@
 ---
-title: "Recommendation System Developed on the Baseline Estimates of the MovieLens 10M Dataset"
+title: "Content-Based Recommendation System Developed from the MovieLens 10M Dataset"
 author: "Nicelle Sernadilla Macaspac"
 date: "June 2023"
 output: pdf_document
@@ -17,112 +17,29 @@ opts_chunk$set(
 ```
 
 
+_WRITE YOUR ABSTRACT HERE_
+
+
 ## Introduction
 
 
-TOPIC/CONTEXT
+The Big Tech companies use recommendation systems to provide customized suggestions of products to users (Koren 2008, 426; Rocca 2019). These algorithms aim to enhance user experience and build customer loyalty (Koren 2008, 426). Recommendation systems can be developed using content-based methods founded on user and product information, collaborative filtering methods based on user-product interactions, or a combination of both (Rocca 2019).
+
+In 2006, the streaming service company Netflix offered USD 1,000,000 to any team that managed to come up with an algorithm that improved on their internal recommendation system, Cinematch, by at least 10%. The hybrid team of KorBell, Big Chaos and Pragmatic Chaos - Bell-Kor's Pragmatic Chaos - triumphed the challenge (Van Buskirk 2009). The team utilized advanced methods of collaborative filtering, restricted Boltzmann machine and gradient-boosted decision trees, yet Koren of team KorBell emphasized the significance of content information from the baseline predictors in capturing the main effects in the dataset and refining the prediction of the algorithm (Koren 2008, 434; Koren 2009, 9).
+
+This project aims to develop a modest recommendation system based on the content information from the baseline predictors in a similar dataset of the movie recommender MovieLens as part of the capstone in the Professional Certificate Program in Data Science of Harvard Online. In the succeeding sections, we initially examine the dataset and user preferences then subsequently build algorithms to develop the recommendation system.
 
 
-FOCUS/SCOPE
-
-
-"Out of the numerous new algorithmic contributions, I would like to highlight one - those humble baseline predictors (or biases), which capture main effects in the data. While the literature mostly concentrates on the more sophisticated algorithmic aspects, we have learned that an accurate treatment of main effects is probably at least as significant as coming up with modeling breakthroughs." (Koren 2009, 9)
-
-
-"Other aspects of the data that may be integrated to improve prediction quality are content information like attributes of users or products, or dates associated with ratings, which may help to explain shifts in user preferences." (Koren 2008, 434)
+## MovieLens 10M Dataset
 
 
 [MovieLens 10M Dataset](https://grouplens.org/datasets/movielens/10m/) (Harper and Konstan 2015)
 
 
-This project aims to use baseline estimates of the dataset to develop a recommendation system that predicts future user ratings with a root mean squared error rate of less than 0.86490.
-
-
-To achieve this, we initially examine the user preferences using data visualization then subsequently build algorithms to develop the recommendation system.
-
-
-## MovieLens 10M Dataset
-
 "The dataset does not only tell us the rating values, but also which movies users rate, regardless of how they rated these movies." (Koren 2008, 428)
 
 
 "All users selected had rated at least 20 movies." (GroupLens, n.d.)
-
-
-
-```{r}
-##########################################################
-# Create edx and final_holdout_test sets
-##########################################################
-
-# Note: this process could take a couple of minutes
-
-if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org") # require() checks if the package exists
-if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
-
-library(tidyverse)
-library(caret)
-
-# MovieLens 10M dataset:
-# https://grouplens.org/datasets/movielens/10m/
-# http://files.grouplens.org/datasets/movielens/ml-10m.zip
-
-options(timeout = 120) # timeout in seconds for some Internet operations
-
-dl <- "ml-10M100K.zip"
-if(!file.exists(dl))
-  download.file("https://files.grouplens.org/datasets/movielens/ml-10m.zip", dl)
-
-ratings_file <- "ml-10M100K/ratings.dat"
-if(!file.exists(ratings_file))
-  unzip(dl, ratings_file)
-
-movies_file <- "ml-10M100K/movies.dat"
-if(!file.exists(movies_file))
-  unzip(dl, movies_file)
-
-ratings <- as.data.frame(str_split(read_lines(ratings_file), fixed("::"), simplify = TRUE),
-                         stringsAsFactors = FALSE)
-colnames(ratings) <- c("userId", "movieId", "rating", "timestamp")
-ratings <- ratings %>%
-  mutate(userId = as.integer(userId),
-         movieId = as.integer(movieId),
-         rating = as.numeric(rating),
-         timestamp = as.integer(timestamp))
-
-movies <- as.data.frame(str_split(read_lines(movies_file), fixed("::"), simplify = TRUE),
-                        stringsAsFactors = FALSE)
-colnames(movies) <- c("movieId", "title", "genres")
-movies <- movies %>%
-  mutate(movieId = as.integer(movieId))
-
-movielens <- left_join(ratings, movies, by = "movieId")
-# 'data.frame':	10000054 obs. of  6 variables:
-# $ userId   : int  1 1 1 1 1 1 1 1 1 1 ...
-# $ movieId  : int  122 185 231 292 316 329 355 356 362 364 ...
-# $ rating   : num  5 5 5 5 5 5 5 5 5 5 ...
-# $ timestamp: int  838985046 838983525 838983392 838983421 838983392 838983392 838984474 838983653 838984885 838983707 ...
-# $ title    : chr  "Boomerang (1992)" "Net, The (1995)" "Dumb & Dumber (1994)" "Outbreak (1995)" ...
-# $ genres   : chr  "Comedy|Romance" "Action|Crime|Thriller" "Comedy" "Action|Drama|Sci-Fi|Thriller" ...
-
-# Final hold-out test set will be 10% of MovieLens data
-set.seed(1, sample.kind="Rounding") # if using R 3.6 or later
-# set.seed(1) # if using R 3.5 or earlier
-test_index <- createDataPartition(y = movielens$rating, times = 1, p = 0.1, list = FALSE)
-edx <- movielens[-test_index,]
-temp <- movielens[test_index,]
-
-# Make sure userId and movieId in final hold-out test set are also in edx set
-final_holdout_test <- temp %>%
-  semi_join(edx, by = "movieId") %>%
-  semi_join(edx, by = "userId")
-
-# Add rows removed from final hold-out test set back into edx set
-removed <- anti_join(temp, final_holdout_test)
-edx <- rbind(edx, removed)
-
-rm(dl, ratings, movies, test_index, temp, movielens, removed)
-```
 
 
 ## User Preference
@@ -131,9 +48,7 @@ rm(dl, ratings, movies, test_index, temp, movielens, removed)
 "Typical CF data exhibit large user and item effects - i.e, systematic tendencies for some users to give higher ratings than others, and for some items to receive higher ratings than others." (Koren 2008, 427)
 
 
-
-
-## Recommendation System Based on Baseline Estimates 
+## Content-Based Algorithm
 
 
 $E = mc^{2}$
@@ -142,13 +57,30 @@ $E = mc^{2}$
 <TABLE 1> (Madhugiri 2022)
 
 
+ to  that predicts future user ratings with a root mean squared error rate of less than 0.86490 
+
 "In practice, we often report the root mean squared error (RMSE), because it is in the same units as the outcomes." (Irizarry 2022)
+
+
+"if our recommender system is based on a model that outputs numeric values such as ratings predictions or matching probabilities, we can assess the quality of these  outputs in a very classical manner using an error measurement metric such as, for example, mean square error (MSE)." (Rocca 2019)
+
+
+## Regularization
+
+
+"Explainability is another key point of the success of recommendation algorithms. Indeed, it has been proven that if users do not understand why they had been recommended a specific item, they tend to lose confidence in the recommender system." (Rocca 2019)
 
 
 "In order to combat overfitting the sparse rating data, models are regularized  so estimates are shrunk towards baseline defaults. Regularization is controlled by constants, which are denoted as: lambda1, lambda2, ..." (Koren 2008, 427)
 
 
 "The regularizing term lambda avoid overfitting by penalizing magnitudes of the parameters." (Koren 2009, 2)
+
+
+## Recommendation System
+
+
+## Evaluation
 
 
 ## Conclusion
@@ -172,20 +104,26 @@ $E = mc^{2}$
 ## Reference
 
 
-Harper, F. Maxwell, and Joseph A. Konstan. 2015. "The MovieLens Datasets: History and Context." _ACM Transactions on Interactive Intelligent Systems_ 5, no. 4: 1-19. [https://doi.org/10.1145/2827872](https://doi.org/10.1145/2827872).
-
-
 GroupLens, n.d. "README.txt." Accessed May 29, 2023. [https://grouplens.org/datasets/movielens/10m/](https://grouplens.org/datasets/movielens/10m/).
+
+
+Harper, F. Maxwell, and Joseph A. Konstan. 2015. "The MovieLens Datasets: History and Context." _ACM Transactions on Interactive Intelligent Systems_ 5, no. 4: 1-19. [https://doi.org/10.1145/2827872](https://doi.org/10.1145/2827872).
 
 
 Irizarry, Rafael A. 2002. _Introduction to Data Science: Data Analysis and Prediction Algorithms with R_. [http://rafalab.dfci.harvard.edu/dsbook/](http://rafalab.dfci.harvard.edu/dsbook/).
 
 
-Madhugiri, Devashree. 2022. "Top 7 Packages for Making Beautiful Tables in R." [https://towardsdatascience.com/top-7-packages-for-making-beautiful-tables-in-r-7683d054e541](https://towardsdatascience.com/top-7-packages-for-making-beautiful-tables-in-r-7683d054e541).
+Koren, Yehuda. 2008. "Factorization Meets the Neighborhood: a Multifaceted Collaborative Filtering Model." [https://people.engr.tamu.edu/huangrh/Spring16/papers_course/matrix_factorization.pdf](https://people.engr.tamu.edu/huangrh/Spring16/papers_course/matrix_factorization.pdf).
 
 
 Koren, Yehuda. 2009. "The BellKor Solution to the Netflix Grand Prize." [https://www2.seas.gwu.edu/~simhaweb/champalg/cf/papers/KorenBellKor2009.pdf](https://www2.seas.gwu.edu/~simhaweb/champalg/cf/papers/KorenBellKor2009.pdf).
 
 
-Koren, Yehuda. 2008. "Factorization Meets the Neighborhood: a Multifaceted Collaborative Filtering Model." [https://people.engr.tamu.edu/huangrh/Spring16/papers_course/matrix_factorization.pdf](https://people.engr.tamu.edu/huangrh/Spring16/papers_course/matrix_factorization.pdf).
+Madhugiri, Devashree. 2022. "Top 7 Packages for Making Beautiful Tables in R." [https://towardsdatascience.com/top-7-packages-for-making-beautiful-tables-in-r-7683d054e541](https://towardsdatascience.com/top-7-packages-for-making-beautiful-tables-in-r-7683d054e541).
+
+
+Rocca, Baptiste. 2019. "Introduction to Recommender Systems." [https://towardsdatascience.com/introduction-to-recommender-systems-6c66cf15ada](https://towardsdatascience.com/introduction-to-recommender-systems-6c66cf15ada).
+
+
+Van Buskirk, Eliot. 2009. "BellKor’s Pragmatic Chaos Wins $1 Million Netflix Prize by Mere Minutes." [https://www.wired.com/2009/09/bellkors-pragmatic-chaos-wins-1-million-netflix-prize/](https://www.wired.com/2009/09/bellkors-pragmatic-chaos-wins-1-million-netflix-prize/).
 
