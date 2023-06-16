@@ -1,23 +1,22 @@
-# CAPSTONE PROJECT: ALL LEARNERS
+# CONTENT-BASED RECOMMENDATION SYSTEM DEVELOPED FROM THE MOVIELENS 10M DATASET
+# NICELLE SERNADILLA MACASPAC
 # NOTE: running time is 7 minutes
 
 
-# Project Overview: MovieLens
+
+# Introduction
 
 
-# we need to create a movie recommendation system using the MovieLens 10M Dataset (https://grouplens.org/datasets/movielens/10m/) to predict the rating of a particular user for a particular movie with a root mean squared error (RMSE) of <0.86490
+
+# we need to develop a modest recommendation system that is based on the content information from the baseline predictors in a similar dataset of the movie recommender MovieLens and that predicts future movie ratings of users with a root mean squared error (RMSE) rate of <0.86490
 
 
-# Create Train and Final Hold-out Test Sets
+
+# MovieLens 10M Dataset
 
 
-# we download the dataset and generate an edx set and a final_holdout_test set using the provided code
 
-##########################################################
-# Create edx and final_holdout_test sets
-##########################################################
-
-# Note: this process could take a couple of minutes
+# we download, wrangle and partition the dataset into the edx set and the final_holdout_test set using a code provided by Harvard Online
 
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org") # require() checks if the package exists
 if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
@@ -86,6 +85,37 @@ edx <- rbind(edx, removed)
 rm(dl, ratings, movies, test_index, temp, movielens, removed)
 
 
+
+# we use the edx set to examine user preferences and to train and test content-based algorithms to develop the recommendation system
+
+head(edx, n = 5)
+str(edx)
+# 'data.frame':	9000055 obs. of  6 variables:
+# $ userId   : int  1 1 1 1 1 1 1 1 1 1 ...
+# $ movieId  : int  122 185 292 316 329 355 356 362 364 370 ...
+# $ rating   : num  5 5 5 5 5 5 5 5 5 5 ...
+# $ timestamp: int  838985046 838983525 838983421 838983392 838983392 838984474 838983653 838984885 838983707 838984596 ...
+# $ title    : chr  "Boomerang (1992)" "Net, The (1995)" "Outbreak (1995)" "Stargate (1994)" ...
+# $ genres   : chr  "Comedy|Romance" "Action|Crime|Thriller" "Action|Drama|Sci-Fi|Thriller" "Action|Adventure|Sci-Fi" ...
+n_distinct(edx$userId)
+# [1] 69878
+n_distinct(edx$movieId)
+# [1] 10677
+unique(edx$rating)
+# [1] 5.0 3.0 2.0 4.0 4.5 3.5 1.0 1.5 2.5 0.5
+
+
+
+# we reserve the final_holdout_test set to evaluate the recommendation system
+
+
+
+
+
+
+
+
+
 # MovieLens Instructions
 
 
@@ -100,15 +130,6 @@ rm(dl, ratings, movies, test_index, temp, movielens, removed)
 
 # we examine the edx set
 
-head(edx)
-str(edx)
-# 'data.frame':	9000055 obs. of  6 variables:
-# $ userId   : int  1 1 1 1 1 1 1 1 1 1 ...
-# $ movieId  : int  122 185 292 316 329 355 356 362 364 370 ...
-# $ rating   : num  5 5 5 5 5 5 5 5 5 5 ...
-# $ timestamp: int  838985046 838983525 838983421 838983392 838983392 838984474 838983653 838984885 838983707 838984596 ...
-# $ title    : chr  "Boomerang (1992)" "Net, The (1995)" "Outbreak (1995)" "Stargate (1994)" ...
-# $ genres   : chr  "Comedy|Romance" "Action|Crime|Thriller" "Action|Drama|Sci-Fi|Thriller" "Action|Adventure|Sci-Fi" ...
 
 
 # we examine user preferences
