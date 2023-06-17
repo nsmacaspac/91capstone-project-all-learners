@@ -1,6 +1,6 @@
 # CONTENT-BASED RECOMMENDATION SYSTEM DEVELOPED FROM THE MOVIELENS 10M DATASET
 # NICELLE SERNADILLA MACASPAC
-# NOTE: running time is 7 minutes
+# RUNNING TIME: 7 minutes
 
 
 
@@ -85,10 +85,9 @@ edx <- rbind(edx, removed)
 rm(dl, ratings, movies, test_index, temp, movielens, removed)
 
 
-
 # we use the edx set to examine user preferences and to train and test content-based algorithms to develop the recommendation system
 
-head(edx, n = 5)
+head(edx, n = 5) # fig1 in the rmd file
 str(edx)
 # 'data.frame':	9000055 obs. of  6 variables:
 # $ userId   : int  1 1 1 1 1 1 1 1 1 1 ...
@@ -105,60 +104,48 @@ unique(edx$rating)
 # [1] 5.0 3.0 2.0 4.0 4.5 3.5 1.0 1.5 2.5 0.5
 
 
-
 # we reserve the final_holdout_test set to evaluate the recommendation system
 
+str(final_holdout_test)
+# 'data.frame':	999999 obs. of  6 variables:
+# $ userId   : int  1 1 1 2 2 2 3 3 4 4 ...
+# $ movieId  : int  231 480 586 151 858 1544 590 4995 34 432 ...
+# $ rating   : num  5 5 5 3 2 3 3.5 4.5 5 3 ...
+# $ timestamp: int  838983392 838983653 838984068 868246450 868245645 868245920 1136075494 1133571200 844416936 844417070 ...
+# $ title    : chr  "Dumb & Dumber (1994)" "Jurassic Park (1993)" "Home Alone (1990)" "Rob Roy (1995)" ...
+# $ genres   : chr  "Comedy" "Action|Adventure|Sci-Fi|Thriller" "Children|Comedy" "Action|Drama|Romance|War" ...
 
 
 
+# User Preference
 
 
 
+# we use the edx set to examine user preferences
 
-
-# MovieLens Instructions
-
-
-# NOTE: we will use the edx set to train and test algorithms, whereas we will reserve the final_holdout_test set only to test the final algorithm
-
-
-# edx Set
-
-
-# we use the edx set to train and test algorithms
-
-
-# we examine the edx set
-
-
-
-# we examine user preferences
-
+set.seed(2, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
+# set.seed(2) # if using R 3.5 or earlier
 sample_index <- sample(1:nrow(edx), 1000)
-edx_figure1 <- edx[sample_index,] |>
+edx_figure2 <- edx[sample_index,] |>
   ggplot(aes(movieId, userId)) +
   geom_point(aes(color = rating)) +
   xlab("Movie Identification Number") +
   ylab("User Identification Number") +
-  scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue") + # reverses the color gradient
-  labs(caption = "Figure 1. Plot of user ratings for movies of a random sample of the dataset.") +
-  theme(plot.caption = element_text(color = "darkblue", size = 11, hjust = 0)) # moves the caption to the left
-edx_figure1
+  scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue") # reverses the color gradient
+edx_figure2
 # users rate certain movies more than others
 
-edx_figure2 <- edx[sample_index,] |>
+edx_figure3 <- edx[sample_index,] |>
   ggplot(aes(genres, userId)) +
   geom_point(aes(color = rating)) +
   theme(axis.text.x = element_text(size = 3, hjust = 1, vjust = 0.5, angle = 90)) +
   xlab("Genre") +
   ylab("User Identification Number") +
-  scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue") +
-  labs(caption = "Figure 2. Plot of user ratings for genres of a random sample of the dataset.") +
-  theme(plot.caption = element_text(color = "darkblue", size = 11, hjust = 0))
-edx_figure2
+  scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue")
+edx_figure3
 # users rate certain genres more than others
 
-edx_figure3 <- edx[sample_index,] |>
+edx_figure4 <- edx[sample_index,] |>
   mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |> # simplifies extraction of the year of release because of the presence of multiple () in the titles
   mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
   mutate(year_rel = as.integer(year_rel)) |>
@@ -166,25 +153,38 @@ edx_figure3 <- edx[sample_index,] |>
   geom_point(aes(color = rating)) +
   xlab("Year of Release") +
   ylab("User Identification Number") +
-  scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue") +
-  labs(caption = "Figure 3. Plot of user ratings per year of release of a random sample of the dataset.") +
-  theme(plot.caption = element_text(color = "darkblue", size = 11, hjust = 0))
-edx_figure3
+  scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue")
+edx_figure4
 # users rate movies from certain years of release more than others
 
-edx_figure4 <- edx |>
-  ggplot(aes(userId)) +
-  geom_histogram(color = "darkblue", bins = 69878) +
+set.seed(6, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
+# set.seed(6) # if using R 3.5 or earlier
+sample_index <- sample(1:nrow(edx), 25)
+edx_figure5 <- edx[sample_index,] |>
+  group_by(userId) |>
+  summarize(ave_rating = mean(rating)) |>
+  ggplot(aes(userId, ave_rating)) +
+  geom_col(color = "darkblue") +
   xlab("User Identification Number") +
-  ylab("Number of Ratings") +
-  labs(caption = "Figure 4. Histogram of user ratings of a large sample of the dataset.") +
-  theme(plot.caption = element_text(color = "darkblue", size = 11, hjust = 0))
-edx_figure4
-# certain users rate more than others
+  ylab("Average Rating")
+edx_figure5
+# certain users rate higher or lower than others
+
+
+
+
+
+
+
+
+
 
 if(!require(lubridate)) install.packages("lubridate", repos = "http://cran.us.r-project.org")
 library(lubridate)
-edx_figure5 <- edx[sample_index,] |>
+set.seed(7, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
+# set.seed(7) # if using R 3.5 or earlier
+sample_index <- sample(1:nrow(edx), 1000)
+edx_figure6 <- edx[sample_index,] |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(hour = hour(time)) |>
   ggplot(aes(hour, userId)) +
@@ -194,9 +194,9 @@ edx_figure5 <- edx[sample_index,] |>
   scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue") +
   labs(caption = "Figure 5. Plot of user ratings per hour of the day of a random sample of the dataset.") +
   theme(plot.caption = element_text(color = "darkblue", size = 11, hjust = 0))
-edx_figure5
+edx_figure6
 
-edx_figure6 <- edx[sample_index,] |>
+edx_figure7 <- edx[sample_index,] |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(day_w = wday(time, label = TRUE, abbr = FALSE)) |>
   ggplot(aes(day_w, userId)) +
@@ -206,9 +206,9 @@ edx_figure6 <- edx[sample_index,] |>
   scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue") +
   labs(caption = "Figure 6. Plot of user ratings per day of the week of a random sample of the dataset.") +
   theme(plot.caption = element_text(color = "darkblue", size = 11, hjust = 0))
-edx_figure6
+edx_figure7
 
-edx_figure7 <- edx[sample_index,] |>
+edx_figure8 <- edx[sample_index,] |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(day_m = day(time)) |>
   ggplot(aes(day_m, userId)) +
@@ -218,9 +218,9 @@ edx_figure7 <- edx[sample_index,] |>
   scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue") +
   labs(caption = "Figure 7. Plot of user ratings per day of the month of a random sample of the dataset.") +
   theme(plot.caption = element_text(color = "darkblue", size = 11, hjust = 0))
-edx_figure7
+edx_figure8
 
-edx_figure8 <- edx[sample_index,] |>
+edx_figure9 <- edx[sample_index,] |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(month = month(time, label = TRUE, abbr = FALSE)) |>
   ggplot(aes(month, userId)) +
@@ -231,24 +231,24 @@ edx_figure8 <- edx[sample_index,] |>
   scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue") +
   labs(caption = "Figure 8. Plot of user ratings per month of the year of a random sample of the dataset.") +
   theme(plot.caption = element_text(color = "darkblue", size = 11, hjust = 0))
-edx_figure8
+edx_figure9
 
-edx_figure9 <- edx[sample_index,] |>
+edx_figure10 <- edx[sample_index,] |>
   mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
   mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
   mutate(year_rel = as.integer(year_rel)) |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(year_rat = year(time)) |>
-  mutate(year_s = year_rat - year_rel) |>
-  ggplot(aes(year_s, userId)) +
+  mutate(rel_age = year_rat - year_rel) |>
+  ggplot(aes(rel_age, userId)) +
   geom_point(aes(color = rating)) +
-  xlab("Year Since Release") +
+  xlab("Relative Age of the Movie") +
   ylab("User Identification Number") +
   scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue") +
-  labs(caption = "Figure 9. Plot of user ratings per year since release of a random sample of the dataset.") +
+  labs(caption = "Figure 9. Plot of user ratings per relative age of the movie of a random sample of the dataset.") +
   theme(plot.caption = element_text(color = "darkblue", size = 11, hjust = 0))
-edx_figure9
-# users rate movies within certain years since release more than others
+edx_figure10
+# users rate movies within certain relative ages more than others
 
 
 # we separate the edx set into a train set and a test set
@@ -289,8 +289,8 @@ average_rmse
 rmse_tibble <- tibble(Algorithm = "Baseline: Average Rating", RMSE = average_rmse)
 
 
-# we train and test algorithm 1: average rating mu + movie bias bi
-# this algorithm predicts that the average rating mu plus a movie bias bi derived from the average rating per movie will be the rating of users for a particular movie
+# we train and test algorithm 1: average rating mu + movie effect bi
+# this algorithm predicts that the average rating mu plus a movie effect bi derived from the average rating per movie will be the rating of users for a particular movie
 # this is based on our previous observation that users rate certain movies more than others
 
 bi_tibble <- train_set |>
@@ -309,12 +309,12 @@ algorithm1_rating <- test_set |>
 algorithm1_rmse <- rmse(test_set$rating, algorithm1_rating)
 algorithm1_rmse
 # [1] 0.94292 # lower than average_rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "1: Average Rating + Movie Bias", RMSE = algorithm1_rmse))
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "1: Average Rating + Movie Effect", RMSE = algorithm1_rmse))
 # we add genre as another possible predictor
 
 
-# we train and test algorithm 2: average rating mu + movie bias bi + genre bias bg
-# this algorithm predicts that the average rating mu plus the movie bias bi plus the genre bias bg derived from the average rating per genre will be the rating of users for a particular movie
+# we train and test algorithm 2: average rating mu + movie effect bi + genre effect bg
+# this algorithm predicts that the average rating mu plus the movie effect bi plus the genre effect bg derived from the average rating per genre will be the rating of users for a particular movie
 # this is based on our previous observation that users rate certain genres more than others
 
 bg_tibble <- train_set |>
@@ -423,23 +423,23 @@ algorithm2_rating <- test_set |>
 algorithm2_rmse <- rmse(test_set$rating, algorithm2_rating)
 algorithm2_rmse
 # [1] 0.94292 # still the same as the algorithm1_rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "2: Average Rating + Movie Bias + Genre Bias", RMSE = algorithm2_rmse))
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "2: Average Rating + Movie Effect + Genre Effect", RMSE = algorithm2_rmse))
 # we replace genre with year of release as another possible predictor
 
 
-# we train and test algorithm 3: average rating mu + movie bias bi + year-of-release bias byr
-# this algorithm predicts that the average rating mu plus the movie bias bi plus the year-of-release bias byr derived from the average rating per year of release will be the rating of users for a particular movie
+# we train and test algorithm 3: average rating mu + movie effect bi + year effect by
+# this algorithm predicts that the average rating mu plus the movie effect bi plus the year effect by derived from the average rating per year of release will be the rating of users for a particular movie
 # this is based on our previous observation that users rate movies from certain years of release more than others
 
-byr_tibble <- train_set |>
+by_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
   mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
   mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
   mutate(year_rel = as.integer(year_rel)) |>
   group_by(year_rel) |>
-  summarize(byr = mean(rating - mu - bi))
+  summarize(by = mean(rating - mu - bi))
 # A tibble: 94 × 2
-#     year_rel     byr
+#     year_rel     by
 #     <int>     <dbl>
 # 1     1915 -5.71e-17
 # 2     1916 -5.48e-17
@@ -449,18 +449,18 @@ algorithm3_rating <- test_set |>
   mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
   mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
   mutate(year_rel = as.integer(year_rel)) |>
-  left_join(byr_tibble, by = "year_rel") |>
-  mutate(algorithm3_rating = mu + bi + byr) |>
+  left_join(by_tibble, by = "year_rel") |>
+  mutate(algorithm3_rating = mu + bi + by) |>
   pull(algorithm3_rating)
 algorithm3_rmse <- rmse(test_set$rating, algorithm3_rating)
 algorithm3_rmse
 # [1] 0.94292 # same as the algorithm1_rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "3: Average Rating + Movie Bias + Year-of-Release Bias", RMSE = algorithm3_rmse))
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "3: Average Rating + Movie Effect + Year Effect", RMSE = algorithm3_rmse))
 # we replace year of release with user as another possible predictor
 
 
-# we train and test algorithm 4: average rating mu + movie bias bi + user bias bu
-# this algorithm predicts that the average rating mu plus a movie bias bi plus a user bias bu derived from the average rating per user will be the rating of a particular user for a particular movie
+# we train and test algorithm 4: average rating mu + movie effect bi + user effect bu
+# this algorithm predicts that the average rating mu plus a movie effect bi plus a user effect bu derived from the average rating per user will be the rating of a particular user for a particular movie
 # this is based on our previous observation that certain users rate more than others
 
 bu_tibble <- train_set |>
@@ -482,26 +482,26 @@ algorithm4_rmse <- rmse(test_set$rating, algorithm4_rating)
 algorithm4_rmse
 # [1] 0.86458 # lower than the algorithm1_rmse and the required rmse
 rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "Required RMSE", RMSE = 0.86490))
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "4: Average Rating + Movie Bias + User Bias", RMSE = algorithm4_rmse))
-# we add year since release as another possible predictor
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "4: Average Rating + Movie Effect + User Effect", RMSE = algorithm4_rmse))
+# we add relative age of the movie as another possible predictor
 
 
-# we train and test algorithm 5: average rating mu + movie bias bi + user bias bu + year-since-release bias bys
-# this algorithm predicts that the average rating mu plus a movie bias bi plus a user bias bu plus a year-since-release bias bys derived from the average rating per year since release will be the rating of a particular user for a particular movie
-# this is based on our previous observation that users rate movies within certain years since release more than others
+# we train and test algorithm 5: average rating mu + movie effect bi + user effect bu + age effect ba
+# this algorithm predicts that the average rating mu plus a movie effect bi plus a user effect bu plus a age effect ba derived from the average rating per relative age of the movie will be the rating of a particular user for a particular movie
+# this is based on our previous observation that users rate movies within certain relative ages more than others
 
-bys_tibble <- train_set |>
+ba_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
   left_join(bu_tibble, by = "userId") |>
   mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>  mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
   mutate(year_rel = as.integer(year_rel)) |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(year_rat = year(time)) |>
-  mutate(year_s = year_rat - year_rel) |>
-  group_by(year_s) |>
-  summarize(bys = mean(rating - mu - bi - bu))
+  mutate(rel_age = year_rat - year_rel) |>
+  group_by(rel_age) |>
+  summarize(ba = mean(rating - mu - bi - bu))
 # A tibble: 96 × 2
-#   year_s     bys
+#   rel_age     ba
 #     <dbl>   <dbl>
 # 1     -2  0.0228
 # 2     -1  0.147
@@ -514,17 +514,17 @@ algorithm5_rating <- test_set |>
   mutate(year_rel = as.integer(year_rel)) |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(year_rat = year(time)) |>
-  mutate(year_s = year_rat - year_rel) |>
-  left_join(bys_tibble, by = "year_s") |>
-  mutate(algorithm5_rating = mu + bi + bu + bys) |>
+  mutate(rel_age = year_rat - year_rel) |>
+  left_join(ba_tibble, by = "rel_age") |>
+  mutate(algorithm5_rating = mu + bi + bu + ba) |>
   pull(algorithm5_rating)
 algorithm5_rmse <- rmse(test_set$rating, algorithm5_rating)
 algorithm5_rmse
 # [1] 0.86414 # lower than algorithm4_rmse and the required rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "5: Average Rating + Movie Bias + User Bias + Year-Since-Release Bias", RMSE = algorithm5_rmse))
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "5: Average Rating + Movie Effect + User Effect + Age Effect", RMSE = algorithm5_rmse))
 
 
-# we evaluate algorithm 5 based on the the "best" movies predicted by the movie bias bi
+# we evaluate algorithm 5 based on the the "best" movies predicted by the movie effect bi
 
 title_tibble <- edx |>
   as_tibble() |>
@@ -555,14 +555,14 @@ train_set |>
 # 9  Who's Singin' Over There? (a.k.a. Who Sings Over There) (Ko to tamo peva) (1980) 1.237613 4
 # 10                            Human Condition III, The (Ningen no joken III) (1961) 1.237613 4
 # the "best" movies are unheard of and come with very low numbers of ratings
-# we adjust the movie bias bi and other predictors in algorithm 5 for the number of ratings using regularization
+# we adjust the movie effect bi and other predictors in algorithm 5 for the number of ratings using regularization
 
 
 ###############
 # ALGORITHM 6 #
 ###############
-# we train and test algorithm 6: average rating mu + regularized movie bias r_bi + regularized user bias r_bu + regularized year-since-release bias r_bys
-# this algorithm predicts that the average rating mu plus the movie bias adjusted or regularized for the number of ratings per movie with a factor lambda r_bi plus the user bias also regularized for the number of ratings per user with a factor lambda r_bu plus the year-since-release bias also regularized for the number of ratings per year since release with a factor lambda r_bys will be the rating of users for a particular movie
+# we train and test algorithm 6: average rating mu + regularized movie effect r_bi + regularized user effect r_bu + regularized age effect r_ba
+# this algorithm predicts that the average rating mu plus the movie effect adjusted or regularized for the number of ratings per movie with a factor lambda r_bi plus the user effect also regularized for the number of ratings per user with a factor lambda r_bu plus the age effect also regularized for the number of ratings per relative age of the movie with a factor lambda r_ba will be the rating of users for a particular movie
 # it improves on algorithm 5
 
 # we optimize the lambda such that it minimizes the rmse
@@ -575,7 +575,7 @@ lambda_rmse <- sapply(lambda_vector, function(l){
     left_join(r_bi_tibble, by = "movieId") |>
     group_by(userId) |>
     summarize(r_bu = sum(rating - mu - r_bi)/(l + n()))
-  r_bys_tibble <- train_set |>
+  r_ba_tibble <- train_set |>
     left_join(r_bi_tibble, by = "movieId") |>
     left_join(r_bu_tibble, by = "userId") |>
     mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
@@ -583,9 +583,9 @@ lambda_rmse <- sapply(lambda_vector, function(l){
     mutate(year_rel = as.integer(year_rel)) |>
     mutate(time = as_datetime(timestamp)) |>
     mutate(year_rat = year(time)) |>
-    mutate(year_s = year_rat - year_rel) |>
-    group_by(year_s) |>
-    summarize(r_bys = sum(rating - mu - r_bi - r_bu)/(l + n()))
+    mutate(rel_age = year_rat - year_rel) |>
+    group_by(rel_age) |>
+    summarize(r_ba = sum(rating - mu - r_bi - r_bu)/(l + n()))
   algorithm6_rating <- test_set |>
     left_join(r_bi_tibble, by = "movieId") |>
     left_join(r_bu_tibble, by = "userId") |>
@@ -594,9 +594,9 @@ lambda_rmse <- sapply(lambda_vector, function(l){
     mutate(year_rel = as.integer(year_rel)) |>
     mutate(time = as_datetime(timestamp)) |>
     mutate(year_rat = year(time)) |>
-    mutate(year_s = year_rat - year_rel) |>
-    left_join(r_bys_tibble, by = "year_s") |>
-    mutate(algorithm6_rating = mu + r_bi + r_bu + r_bys) |>
+    mutate(rel_age = year_rat - year_rel) |>
+    left_join(r_ba_tibble, by = "rel_age") |>
+    mutate(algorithm6_rating = mu + r_bi + r_bu + r_ba) |>
     pull(algorithm6_rating)
   return(rmse(test_set$rating, algorithm6_rating))
 })
@@ -611,7 +611,7 @@ r_bu_tibble <- train_set |>
   left_join(r_bi_tibble, by = "movieId") |>
   group_by(userId) |>
   summarize(r_bu = sum(rating - mu - r_bi)/(lambda + n()))
-r_bys_tibble <- train_set |>
+r_ba_tibble <- train_set |>
   left_join(r_bi_tibble, by = "movieId") |>
   left_join(r_bu_tibble, by = "userId") |>
   mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
@@ -619,9 +619,9 @@ r_bys_tibble <- train_set |>
   mutate(year_rel = as.integer(year_rel)) |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(year_rat = year(time)) |>
-  mutate(year_s = year_rat - year_rel) |>
-  group_by(year_s) |>
-  summarize(r_bys = sum(rating - mu - r_bi - r_bu)/(lambda + n()))
+  mutate(rel_age = year_rat - year_rel) |>
+  group_by(rel_age) |>
+  summarize(r_ba = sum(rating - mu - r_bi - r_bu)/(lambda + n()))
 algorithm6_rating <- test_set |>
   left_join(r_bi_tibble, by = "movieId") |>
   left_join(r_bu_tibble, by = "userId") |>
@@ -630,14 +630,14 @@ algorithm6_rating <- test_set |>
   mutate(year_rel = as.integer(year_rel)) |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(year_rat = year(time)) |>
-  mutate(year_s = year_rat - year_rel) |>
-  left_join(r_bys_tibble, by = "year_s") |>
-  mutate(algorithm6_rating = mu + r_bi + r_bu + r_bys) |>
+  mutate(rel_age = year_rat - year_rel) |>
+  left_join(r_ba_tibble, by = "rel_age") |>
+  mutate(algorithm6_rating = mu + r_bi + r_bu + r_ba) |>
   pull(algorithm6_rating)
 algorithm6_rmse <- rmse(test_set$rating, algorithm6_rating)
 algorithm6_rmse
 # [1] 0.86353 # lower than the algorithm5_rmse and the required rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "6: Average Rating + Regularized Movie Bias + Regularized User Bias + Regularized Year-Since-Release Bias", RMSE = algorithm6_rmse))
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "6: Average Rating + Regularized Movie Effect + Regularized User Effect + Regularized Age Effect", RMSE = algorithm6_rmse))
 if(!require(kableExtra)) install.packages("kableExtra", repos = "http://cran.us.r-project.org")
 library(kableExtra)
 kbl(rmse_tibble) |> # Table 1. Root Mean Squared Errors (RMSEs) of the Algorithms
@@ -649,7 +649,7 @@ kbl(rmse_tibble) |> # Table 1. Root Mean Squared Errors (RMSEs) of the Algorithm
 ###############
 
 
-# we evaluate algorithm 6 based on the the best movies predicted by the regularized movie bias r_bi
+# we evaluate algorithm 6 based on the the best movies predicted by the regularized movie effect r_bi
 
 train_set |>
   count(movieId) |>
@@ -669,7 +669,7 @@ train_set |>
 # 8                          Third Man, The (1949) 0.7988919  2671
 # 9                        Double Indemnity (1944) 0.7969676  1928
 # 10   Seven Samurai (Shichinin no samurai) (1954) 0.7968523  4658
-# the best movies are well known and come with high numbers of ratings compared to those predicted by the movie bias bi of algorithm 5
+# the best movies are well known and come with high numbers of ratings compared to those predicted by the movie effect bi of algorithm 5
 
 
 # we evaluate the robustness of algorithm 6 on new data using bootstrapping
@@ -686,9 +686,9 @@ for(i in 1:5){
     mutate(year_rel = as.integer(year_rel)) |>
     mutate(time = as_datetime(timestamp)) |>
     mutate(year_rat = year(time)) |>
-    mutate(year_s = year_rat - year_rel) |>
-    left_join(r_bys_tibble, by = "year_s") |>
-    mutate(cv_algorithm6_rating = mu + r_bi + r_bu + r_bys) |>
+    mutate(rel_age = year_rat - year_rel) |>
+    left_join(r_ba_tibble, by = "rel_age") |>
+    mutate(cv_algorithm6_rating = mu + r_bi + r_bu + r_ba) |>
     pull(cv_algorithm6_rating)
   cv_algorithm6_rmse <- rmse(cv_test_set$rating, cv_algorithm6_rating)
   cv_algorithm6_rmses <- c(cv_algorithm6_rmses, cv_algorithm6_rmse)
@@ -705,7 +705,7 @@ mean(cv_algorithm6_rmses)
 # we reserve the final_holdout_test set only to test the final algorithm
 
 
-# we predict the ratings in the the final_holdout_test set using the final algorithm 6: average rating mu + regularized movie bias r_bi + regularized user bias r_bu + regularized year-since-release bias r_bys
+# we predict the ratings in the the final_holdout_test set using the final algorithm 6: average rating mu + regularized movie effect r_bi + regularized user effect r_bu + regularized age effect r_ba
 
 predicted_rating <- final_holdout_test |>
   left_join(r_bi_tibble, by = "movieId") |>
@@ -715,9 +715,9 @@ predicted_rating <- final_holdout_test |>
   mutate(year_rel = as.integer(year_rel)) |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(year_rat = year(time)) |>
-  mutate(year_s = year_rat - year_rel) |>
-  left_join(r_bys_tibble, by = "year_s") |>
-  mutate(predicted_rating = mu + r_bi + r_bu + r_bys) |>
+  mutate(rel_age = year_rat - year_rel) |>
+  left_join(r_ba_tibble, by = "rel_age") |>
+  mutate(predicted_rating = mu + r_bi + r_bu + r_ba) |>
   pull(predicted_rating)
 final_holdout_test_rmse <- rmse(final_holdout_test$rating, predicted_rating)
 final_holdout_test_rmse
