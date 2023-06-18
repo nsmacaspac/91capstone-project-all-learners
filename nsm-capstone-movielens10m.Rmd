@@ -24,9 +24,9 @@ opts_chunk$set(
 
 The Big Tech companies use recommendation systems to provide customized suggestions of products to users (Koren 2008, 426; Rocca 2019). These algorithms aim to enhance user experience and build customer loyalty (Koren 2008, 426). They are commonly developed using content-based methods founded on user and product information and collaborative filtering methods based on user-product interactions (Rocca 2019).
 
-In 2006, the streaming service company Netflix offered USD 1,000,000 to any team that managed to come up with an algorithm that improved on their internal recommendation system, Cinematch, by 10% or more. The hybrid team of KorBell, Big Chaos and Pragmatic Chaos - Bell-Kor's Pragmatic Chaos - triumphed the challenge (Van Buskirk 2009). The team utilized advanced methods of collaborative filtering, restricted Boltzmann machine and gradient-boosted decision trees, yet Koren (2008, 434; 2009, 9) of team KorBell emphasized the significance of content information from the baseline predictors in capturing the main effects in the dataset and refining the prediction of the algorithm.
+In 2006, the streaming service company Netflix offered USD 1,000,000 to any team that managed to come up with an algorithm that improved on their internal recommendation system, Cinematch, by 10% or more. The hybrid team of KorBell, Big Chaos and Pragmatic Chaos - Bell-Kor's Pragmatic Chaos - triumphed the challenge (Van Buskirk 2009). The team utilized advanced methods of collaborative filtering, restricted Boltzmann machine and gradient-boosted decision trees, yet Koren (2008, 434; 2009, 9) of team KorBell emphasized the significance of content information from the baseline predictors in capturing the main biases in the dataset and refining the prediction of the algorithm.
 
-Following this lead, this project aims to develop a modest recommendation system that is based on the content information from the baseline predictors in a similar dataset of the movie recommender MovieLens and that predicts future movie ratings of users with a root mean squared error rate of less than 0.86490. In the succeeding sections, we examine the dataset and user preferences then subsequently build algorithms to develop the recommendation system.
+Following this lead, this project aims to develop a modest recommendation system that is based on content information from baseline predictors in a similar dataset of the movie recommender MovieLens and that predicts future movie ratings of users with a root mean squared error rate of less than 0.86490. In the succeeding sections, we examine the dataset and user preferences then subsequently build algorithms to develop the recommendation system.
 
 This undertaking is part of the capstone in the [Professional Certificate Program in Data Science of Harvard Online](https://www.harvardonline.harvard.edu/course/data-science-professional-certificate).
 
@@ -34,7 +34,7 @@ This undertaking is part of the capstone in the [Professional Certificate Progra
 ## MovieLens 10M Dataset
 
 
-The [MovieLens 10M Dataset](https://grouplens.org/datasets/movielens/10m/) was composed of 10,000,054 movie ratings from users with 20 ratings or more (GroupLens, n.d.; Harper and Konstan 2015). The raw dataset was downloaded and subjected to wrangling using a code in the language R provided by Harvard Online, which standardized its formatting and partitioning into the edx set and the final holdout test set across all projects.
+The [MovieLens 10M Dataset](https://grouplens.org/datasets/movielens/10m/) was composed of 10,000,054 movie ratings from users with 20 ratings or more (GroupLens, n.d.; Harper and Konstan 2015). The dataset was downloaded and subjected to wrangling using an initial code in the language R provided by Harvard Online, which standardized its formatting and partitioning into an edx set and a final holdout test set across all projects.
 
 ```{r code}
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org") # require() checks if the package exists
@@ -104,7 +104,7 @@ edx <- rbind(edx, removed)
 rm(dl, ratings, movies, test_index, temp, movielens, removed)
 ```
 
-The edx set was used to examine user preferences and to train and test content-based algorithms to develop the recommendation system. It contained 9,000,055 movie ratings, each with 6 variables: userId, movieId, rating, timestamp, title and genres (fig. 1). UserIDs and movieIDs were unique to each of its 69,878 users and 10,677 movies, respectively.  Ratings ranged from 0.5 to 5 stars. Timestamps were rendered in Unix time. Titles were captured manually according to how they appear in the movie database IMDb and included the year of release (GroupLens, n.d.).
+The edx set was used to examine user preferences and to train and test content-based algorithms to develop the recommendation system. It contained 9,000,055 movie ratings, each with 6 variables: userId, movieId, rating, timestamp, title and genres (fig. 1). UserIds and movieIds were unique to each of its 69,878 users and 10,677 movies, respectively.  Ratings ranged from 0.5 to 5 stars. Timestamps were rendered in Unix time. Titles and were captured manually according to how they appear in the movie database IMDb and included the years of movie release (GroupLens, n.d.).
 
 ```{r fig1, fig.cap = "First rows of the edx set."}
 include_graphics("fig1.png") # replaces head(edx, n = 5), which does not knit nicely
@@ -116,11 +116,15 @@ On the other hand, the final holdout test set was reserved to evaluate the recom
 ## User Preference
 
 
-The interactions of the variables of the edx set were visualized using the ggplot2 functions to examine user preferences. 
+The interactions of the variables of the edx set were visualized using ggplot2 functions to examine user preferences.
+
+
+### _MovieId and Genres_
+
 
 A plot of user ratings against movieIds of a random sample of the data showed an aggregration of the ratings on a number of movieIds (fig. 2). This indicated the tendency of users to rate certain movies more than others and consequently imparted which movies are popular.
-
-```{r fig2, fig.cap = "Scatterplot of user ratings vs movieIds of a random sample of the edx set."}
+  
+```{r fig2, fig.cap = "Scatterplot of user ratings vs movies of a random sample of the edx set."}
 set.seed(2, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
 # set.seed(2) # if using R 3.5 or earlier
 sample_index <- sample(1:nrow(edx), 1000)
@@ -133,7 +137,7 @@ edx_figure2 <- edx[sample_index,] |>
 edx_figure2
 ```
 
-Similarly, a plot of user ratings against genres of a random sample of the data exhibited accummulation of the ratings on genres such as Comedy and Drama (fig. 3), signifying the preference of users for certain genres more than others.
+A similar plot of user ratings against genres likewise exhibited the preference of users for certain genres such as Comedy and Drama (fig. 3).
 
 ```{r fig3, fig.cap = "Scatterplot of user ratings vs genres of a random sample of the edx set."}
 edx_figure3 <- edx[sample_index,] |>
@@ -146,9 +150,13 @@ edx_figure3 <- edx[sample_index,] |>
 edx_figure3
 ```
 
-Titles were not unique to each movie unlike movieIds and were therefore not good identifiers. However, they contained important information: the years of release. Hence, the years were extracted from the ends of the titles utilizing the dplyr and stringr functions, and a plot of user ratings against the years of a random sample of the data was produced (fig. 4). This revealed the inclination of users toward movies from the 1990s to 2000s.
 
-```{r fig4, fig.cap = "Scatterplot of user ratings per year of release of a random sample of the  edx set."}
+### _Title and Year of Release_
+
+
+Titles were not unique to each movie unlike movieIds and were therefore not good movie identifiers. However, they contained important information: the years of movie release. Hence, the years were extracted from the ends of the titles utilizing stringr functions, and a plot of user ratings per year of a random sample of the data was produced (fig. 4). This revealed the inclination of users toward movies from the 1990s to 2000s.
+
+```{r fig4, fig.cap = "Scatterplot of user ratings per year of movie release of a random sample of the  edx set."}
 edx_figure4 <- edx[sample_index,] |>
   mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |> # simplifies extraction of the year of release because of the presence of multiple () in the titles
   mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
@@ -161,7 +169,11 @@ edx_figure4 <- edx[sample_index,] |>
 edx_figure4
 ```
 
-A simple bar chart of average user ratings of a random sample of the data showed the tendencies for certain users to give a liberal average rating of 5 (fig. 5).  On the other hand, some users gave a conservative average rating of 1.
+
+### _UserId_
+
+
+A simple bar chart of average user ratings of a random sample of the data showed the tendencies for certain users to give a generous average rating of 5 (fig. 5).  On the other hand, some users gave a stingy average rating of 1.
 
 ```{r fig5, fig.cap = "Bar chart of average user ratings of a random sample of the edx set."}
 set.seed(6, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
@@ -175,6 +187,84 @@ edx_figure5 <- edx[sample_index,] |>
   xlab("User Identification Number") +
   ylab("Average Rating")
 edx_figure5
+```
+
+
+### _Timestamp and Relative Age_
+
+
+Timestamps in Unix time implicitly contained the dates and times when the ratings were made. Using lubridate functions, the hour, day of the week, day of the month and month of the ratings were obtained. Plots of user ratings per hour, day of the week, day of the month and month of a random sample of the data were constructed but showed no apparent bias (figs. 6-9).
+
+```{r fig6, fig.cap = "Scatterplot of user ratings per hour of the day of a random sample of the edx set."}
+if(!require(lubridate)) install.packages("lubridate", repos = "http://cran.us.r-project.org")
+library(lubridate)
+set.seed(7, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
+# set.seed(7) # if using R 3.5 or earlier
+sample_index <- sample(1:nrow(edx), 1000)
+edx_figure6 <- edx[sample_index,] |>
+  mutate(time = as_datetime(timestamp)) |>
+  mutate(hour = hour(time)) |>
+  ggplot(aes(hour, userId)) +
+  geom_point(aes(color = rating)) +
+  xlab("Hour") +
+  ylab("User Identification Number") +
+  scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue")
+edx_figure6
+```
+
+```{r fig7, fig.cap = "Scatterplot of user ratings per day of the week of a random sample of the edx set."}
+edx_figure7 <- edx[sample_index,] |>
+  mutate(time = as_datetime(timestamp)) |>
+  mutate(day_w = wday(time, label = TRUE, abbr = FALSE)) |>
+  ggplot(aes(day_w, userId)) +
+  geom_point(aes(color = rating)) +
+  xlab("Day of the Week") +
+  ylab("User Identification Number") +
+  scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue")
+edx_figure7
+```
+
+```{r fig8, fig.cap = "Scatterplot of user ratings per day of the month of a random sample of the edx set."}
+edx_figure8 <- edx[sample_index,] |>
+  mutate(time = as_datetime(timestamp)) |>
+  mutate(day_m = day(time)) |>
+  ggplot(aes(day_m, userId)) +
+  geom_point(aes(color = rating)) +
+  xlab("Day of the Month") +
+  ylab("User Identification Number") +
+  scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue")
+edx_figure8
+```
+
+```{r fig9, fig.cap = "Scatterplot of user ratings per month of the year of a random sample of the edx set."}
+edx_figure9 <- edx[sample_index,] |>
+  mutate(time = as_datetime(timestamp)) |>
+  mutate(month = month(time, label = TRUE, abbr = FALSE)) |>
+  ggplot(aes(month, userId)) +
+  geom_point(aes(color = rating)) +
+  theme(axis.text.x = element_text(hjust = 1, vjust = 0.5, angle = 90)) +
+  xlab("Month") +
+  ylab("User Identification Number") +
+  scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue")
+edx_figure9
+```
+
+Unlike hours, days and months, the years of rating are not recurring units of time that we expect in future data. Instead of using them as is, the relative ages of movies were calculated from the years of rating and release through stringr and lubridate functions. A plot of user ratings against relative ages of a random sample of the data exhibited the preference of users to rate movies within 10 years of their release (fig. 10).
+
+```{r fig10, fig.cap = "Scatterplot of user ratings vs relative ages of movies of a random sample of the edx set"}
+edx_figure10 <- edx[sample_index,] |>
+  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
+  mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
+  mutate(year_rel = as.integer(year_rel)) |>
+  mutate(time = as_datetime(timestamp)) |>
+  mutate(year_rat = year(time)) |>
+  mutate(rel_age = year_rat - year_rel) |>
+  ggplot(aes(rel_age, userId)) +
+  geom_point(aes(color = rating)) +
+  xlab("Relative Age of the Movie") +
+  ylab("User Identification Number") +
+  scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue")
+edx_figure10
 ```
 
 
