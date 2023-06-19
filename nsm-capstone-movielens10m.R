@@ -235,6 +235,10 @@ edx_figure10
 
 
 
+## Content-Based Algorithm
+
+
+
 
 
 
@@ -244,6 +248,7 @@ edx_figure10
 
 # we separate the edx set into a train set and a test set
 
+options(digits = 5)
 set.seed(10, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
 # set.seed(10) # if using R 3.5 or earlier
 test_index <- createDataPartition(edx$rating, p = 0.1, list = FALSE)
@@ -268,16 +273,15 @@ rmse <- function(actual_rating, predicted_rating){
 # we define and test the baseline algorithm: average rating mu
 # this algorithm simply predicts that the average rating mu in the train set will be the rating of users for movies in the test set as a basis of comparison for the succeeding algorithms
 
-options(digits = 5)
 mu <- mean(train_set$rating)
 mu
 # [1] 3.5124
-average_rmse <- rmse(test_set$rating, mu)
-average_rmse
+baseline_rmse <- rmse(test_set$rating, mu)
+baseline_rmse
 # [1] 1.0593
 
 # we tabulate the rmses
-rmse_tibble <- tibble(Algorithm = "Baseline: Average Rating", RMSE = average_rmse)
+rmse_tibble <- tibble(Algorithm = "Baseline: Average Rating", RMSE = baseline_rmse)
 
 
 # we train and test algorithm 1: average rating mu + movie bias bi
@@ -299,7 +303,7 @@ algorithm1_rating <- test_set |>
   pull(algorithm1_rating)
 algorithm1_rmse <- rmse(test_set$rating, algorithm1_rating)
 algorithm1_rmse
-# [1] 0.94292 # lower than average_rmse
+# [1] 0.94292 # lower than baseline_rmse
 rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "1: Average Rating + Movie Bias", RMSE = algorithm1_rmse))
 # we add genre as another possible predictor
 
@@ -418,19 +422,19 @@ rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "2: Average Rating + Movie 
 # we replace genre with year of release as another possible predictor
 
 
-# we train and test algorithm 3: average rating mu + movie bias bi + year bias by
-# this algorithm predicts that the average rating mu plus the movie bias bi plus the year bias by derived from the average rating per year of release will be the rating of users for a particular movie
+# we train and test algorithm 3: average rating mu + movie bias bi + release bias br
+# this algorithm predicts that the average rating mu plus the movie bias bi plus the release bias br derived from the average rating per year of release will be the rating of users for a particular movie
 # this is based on our previous observation that users rate movies from certain years of release more than others
 
-by_tibble <- train_set |>
+br_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
   mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
   mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
   mutate(year_rel = as.integer(year_rel)) |>
   group_by(year_rel) |>
-  summarize(by = mean(rating - mu - bi))
+  summarize(br = mean(rating - mu - bi))
 # A tibble: 94 × 2
-#     year_rel     by
+#     year_rel     br
 #     <int>     <dbl>
 # 1     1915 -5.71e-17
 # 2     1916 -5.48e-17
@@ -440,13 +444,13 @@ algorithm3_rating <- test_set |>
   mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
   mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
   mutate(year_rel = as.integer(year_rel)) |>
-  left_join(by_tibble, by = "year_rel") |>
-  mutate(algorithm3_rating = mu + bi + by) |>
+  left_join(br_tibble, by = "year_rel") |>
+  mutate(algorithm3_rating = mu + bi + br) |>
   pull(algorithm3_rating)
 algorithm3_rmse <- rmse(test_set$rating, algorithm3_rating)
 algorithm3_rmse
 # [1] 0.94292 # same as the algorithm1_rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "3: Average Rating + Movie Bias + Year Bias", RMSE = algorithm3_rmse))
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "3: Average Rating + Movie Bias + Release Bias", RMSE = algorithm3_rmse))
 # we replace year of release with user as another possible predictor
 
 
@@ -698,7 +702,7 @@ mean(cv_algorithm6_rmses)
 
 # we predict the ratings in the the final_holdout_test set using the final algorithm 6: average rating mu + regularized movie bias r_bi + regularized user bias r_bu + regularized age bias r_ba
 
-predicted_rating <- final_holdout_test |>
+holdout_rating <- final_holdout_test |>
   left_join(r_bi_tibble, by = "movieId") |>
   left_join(r_bu_tibble, by = "userId") |>
   mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
@@ -708,9 +712,9 @@ predicted_rating <- final_holdout_test |>
   mutate(year_rat = year(time)) |>
   mutate(rel_age = year_rat - year_rel) |>
   left_join(r_ba_tibble, by = "rel_age") |>
-  mutate(predicted_rating = mu + r_bi + r_bu + r_ba) |>
-  pull(predicted_rating)
-final_holdout_test_rmse <- rmse(final_holdout_test$rating, predicted_rating)
-final_holdout_test_rmse
+  mutate(holdout_rating = mu + r_bi + r_bu + r_ba) |>
+  pull(holdout_rating)
+holdout_rmse <- rmse(final_holdout_test$rating, holdout_rating)
+holdout_rmse
 # [1] 0.86469 # lower than the required rmse of 0.86490
 
