@@ -35,7 +35,7 @@ This undertaking is part of the capstone in the [Professional Certificate Progra
 ## MovieLens 10M Dataset
 
 
-The [MovieLens 10M Dataset](https://grouplens.org/datasets/movielens/10m/) was composed of 10,000,054 movie ratings from users with 20 ratings or more (GroupLens, n.d.; Harper and Konstan 2015). The dataset was downloaded and subjected to wrangling using an initial code in the language R provided by Harvard Online, which standardized its formatting and partitioning into an edx set and a final holdout test set across all projects.
+The [MovieLens 10M Dataset](https://grouplens.org/datasets/movielens/10m/) was composed of 10,000,054 movie ratings from users with 20 ratings or more (GroupLens, n.d.; Harper and Konstan 2015). The dataset was downloaded and subjected to wrangling using an initial code in the language R provided by Harvard Online, which standardized its formatting and partitioning into 90% edx set and 10% final holdout test set across all projects.
 
 ```{r}
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org") # require() checks if the package exists
@@ -272,7 +272,7 @@ edx_figure10
 ## Content-Based Algorithm
 
 
-Given the biases observed in the contents of the edx set, the following were considered as possible predictors for the recommendation system: movieId, genre, year of release, userId and relative age. Algorithms based on these predictors were progressively trained on 90% of the edx set (train set) by calculating the deviation caused by the predictor from the average (Koren 2009). Then, they were tested on the remaining 10% of the edx set (test set) for the the RMSE of their predicted ratings from the actual ones. The RMSE was the preferred measure of error as it results in the same units as the given ones (Irizarry 2022).
+Given the biases observed in the contents of the edx set, the following were considered as possible predictors of the actual ratings in the recommendation system: movieId, genre, year of release, userId and relative age. Algorithms based on these predictors were progressively trained on 90% of the edx set (train set) by calculating the deviation caused by the predictor from the average using the penalized least squares equation (Irizarry 2022, Koren 2009). Then, they were tested on the remaining 10% of the edx set (test set) for the the RMSE of their predicted ratings from the actual ones. The RMSE was the preferred measure of error as it results in the same units as the given ones (Irizarry 2022).
 
 ```{r}
 options(digits = 5)
@@ -292,21 +292,10 @@ rmse <- function(actual_rating, predicted_rating){
 ```
 
 
-
-
-
-
-
-
-
-
 ### _Baseline Algorithm: Average Rating $\mu$_
 
 
-$r_p = \mu + b_1 + ... + b_N + \epsilon$
-
-
-The baseline algorithm was constructed on the basic assumption that the average rating $\mu$ in the train set will be the predicted rating of users for movies in the testing set as a basis of comparison for the RMSE of the succeeding algorithms.
+The baseline algorithm was constructed on the simple assumption that the average rating $\mu$ of 3.5124 in the train set predicts ratings with the least error from the actual ratings in the testing set. This gave an RMSE of 1.0593, which served as the basis of comparison for the RMSE of the succeeding algorithms.
 
 ```{r, echo = TRUE}
 mu <- mean(train_set$rating)
@@ -314,7 +303,6 @@ mu
 baseline_rmse <- rmse(test_set$rating, mu)
 baseline_rmse
 ```
-
 ```{r}
 # we tabulate the rmses
 rmse_tibble <- tibble(Algorithm = "Baseline: Average Rating", RMSE = baseline_rmse)
@@ -324,10 +312,145 @@ rmse_tibble <- tibble(Algorithm = "Baseline: Average Rating", RMSE = baseline_rm
 ### _Algorithm 1: Average Rating $\mu$ + Movie Bias $b_i$_
 
 
+The baseline algorithm predicted rating was improved by adding the deviation from the average caused by the observed movie bias. The bias of each movie $b_i$ was calculated from the average of the movie ratings less the $\mu$. This lowered the RMSE of the prediction to 0.94292.
+
+```{r, echo = TRUE}
+bi_tibble <- train_set |>
+  group_by(movieId) |>
+  summarize(bi = mean(rating - mu))
+head(bi_tibble, n = 5)
+algorithm1_rating <- test_set |>
+  left_join(bi_tibble, by = "movieId") |> # adds the bi column
+  mutate(algorithm1_rating = mu + bi) |>
+  pull(algorithm1_rating)
+algorithm1_rmse <- rmse(test_set$rating, algorithm1_rating)
+algorithm1_rmse
+```
+```{r}
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "1: Average Rating + Movie Bias", RMSE = algorithm1_rmse))
+```
+
+
 ### _Algorithm 2: Average Rating $\mu$ + Movie Bias $b_i$ + Genre Bias $b_g$_
 
 
+The algorithm 1 predicted ratings were amended with the deviation from the average caused by the observed genre bias. The bias of each genre combination $b_g$ was calculated from the average of the genre-combination ratings less the $\mu$ and $b_i$. However, this did not significantly affect the RMSE of the prediction, which remained at 0.94292.
+
+```{r, echo = TRUE}
+bg_tibble <- train_set |>
+  left_join(bi_tibble, by = "movieId") |>
+  group_by(genres) |>
+  summarize(bg = mean(rating - mu - bi))
+head(bg_tibble, n = 5)
+algorithm2_rating <- test_set |>
+  left_join(bi_tibble, by = "movieId") |>
+  left_join(bg_tibble, by = "genres") |>
+  mutate(algorithm2_rating = mu + bi + bg) |>
+  pull(algorithm2_rating)
+algorithm2_rmse <- rmse(test_set$rating, algorithm2_rating)
+algorithm2_rmse
+```
+
+Hence, the top genre was extracted from each genre combination with the str_detect function. Then, the $b_g$ was recalculated from the average of the top-genre ratings less the $\mu$ and $b_i$. Still, this did not significantly affect the RMSE of the prediction, which remained at 0.94292.
+
+```{r, echo = TRUE}
+genre_vector <- c("Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror",  "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western") # (GroupLens, n.d.)
+genre_rating <- sapply(genre_vector, function(g){
+  train_set_a <- train_set |> filter(str_detect(genres, g) == TRUE)
+  mean(train_set_a$rating)
+})
+genre_tibble <- tibble(genre = genre_vector, rating = genre_rating) |> arrange(-rating) # arranges the genres according to decreasing rating
+genre_tibble
+bg_tibble <- train_set |>
+  left_join(bi_tibble, by = "movieId") |>
+  mutate(t_genre = case_when(str_detect(genres, "Film-Noir") ~ "Film-Noir",
+                             str_detect(genres, "Documentary") ~ "Documentary",
+                             str_detect(genres, "War") ~ "War",
+                             str_detect(genres, "Mystery") ~ "Mystery",
+                             str_detect(genres, "Drama") ~ "Drama",
+                             str_detect(genres, "Crime") ~ "Crime",
+                             str_detect(genres, "Animation") ~ "Animation",
+                             str_detect(genres, "Musical") ~ "Musical",
+                             str_detect(genres, "Western") ~ "Western",
+                             str_detect(genres, "Romance") ~ "Romance",
+                             str_detect(genres, "Thriller") ~ "Thriller",
+                             str_detect(genres, "Fantasy") ~ "Fantasy",
+                             str_detect(genres, "Adventure") ~ "Adventure",
+                             str_detect(genres, "Comedy") ~ "Comedy",
+                             str_detect(genres, "Action") ~ "Action",
+                             str_detect(genres, "Children") ~ "Children",
+                             str_detect(genres, "Sci-Fi") ~ "Sci-Fi",
+                             str_detect(genres, "Horror") ~ "Horror")) |>
+  group_by(t_genre) |>
+  summarize(bg = mean(rating - mu - bi))
+head(bg_tibble, n = 5)
+algorithm2_rating <- test_set |>
+  left_join(bi_tibble, by = "movieId") |>
+  mutate(t_genre = case_when(str_detect(genres, "Film-Noir") ~ "Film-Noir",
+                             str_detect(genres, "Documentary") ~ "Documentary",
+                             str_detect(genres, "War") ~ "War",
+                             str_detect(genres, "Mystery") ~ "Mystery",
+                             str_detect(genres, "Drama") ~ "Drama",
+                             str_detect(genres, "Crime") ~ "Crime",
+                             str_detect(genres, "Animation") ~ "Animation",
+                             str_detect(genres, "Musical") ~ "Musical",
+                             str_detect(genres, "Western") ~ "Western",
+                             str_detect(genres, "Romance") ~ "Romance",
+                             str_detect(genres, "Thriller") ~ "Thriller",
+                             str_detect(genres, "Fantasy") ~ "Fantasy",
+                             str_detect(genres, "Adventure") ~ "Adventure",
+                             str_detect(genres, "Comedy") ~ "Comedy",
+                             str_detect(genres, "Action") ~ "Action",
+                             str_detect(genres, "Children") ~ "Children",
+                             str_detect(genres, "Sci-Fi") ~ "Sci-Fi",
+                             str_detect(genres, "Horror") ~ "Horror")) |>
+  left_join(bg_tibble, by = "t_genre") |>
+  mutate(algorithm2_rating = mu + bi + bg) |>
+  pull(algorithm2_rating)
+algorithm2_rmse <- rmse(test_set$rating, algorithm2_rating)
+algorithm2_rmse
+```
+```{r}
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "2: Average Rating + Movie Bias + Genre Bias", RMSE = algorithm2_rmse))
+```
+
+
 ### _Algorithm 3: Average Rating $\mu$ + Movie Bias $b_i$ + Release Bias $b_r$_
+
+
+The algorithm 1 predicted ratings were updated with the deviation from the average caused by the observed year-of-release bias in place of the genre bias. The bias of each year of release $b_r$ was calculated from the average of the year-of-release ratings less the $\mu$ and $b_i$. However, this did not significantly affect the RMSE of the prediction as well, which remained at 0.94292.
+
+```{r, echo = TRUE}
+br_tibble <- train_set |>
+  left_join(bi_tibble, by = "movieId") |>
+  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
+  mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
+  mutate(year_rel = as.integer(year_rel)) |>
+  group_by(year_rel) |>
+  summarize(br = mean(rating - mu - bi))
+head(br_tibble, n = 5)
+algorithm3_rating <- test_set |>
+  left_join(bi_tibble, by = "movieId") |>
+  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
+  mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
+  mutate(year_rel = as.integer(year_rel)) |>
+  left_join(br_tibble, by = "year_rel") |>
+  mutate(algorithm3_rating = mu + bi + br) |>
+  pull(algorithm3_rating)
+algorithm3_rmse <- rmse(test_set$rating, algorithm3_rating)
+algorithm3_rmse
+```
+```{r}
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "3: Average Rating + Movie Bias + Release Bias", RMSE = algorithm3_rmse))
+```
+
+
+
+
+
+
+
+
 
 
 ### _Algorithm 4: Average Rating $\mu$ + Movie Bias $b_i$ + User Bias $b_u$_
@@ -336,7 +459,7 @@ rmse_tibble <- tibble(Algorithm = "Baseline: Average Rating", RMSE = baseline_rm
 ### _Algorithm 5: Average Rating $\mu$ + Movie Bias $b_i$ + User Bias $b_u$ + Age Bias $b_a$_
 
 
-### _Algorithm 6: Average Rating $\mu$ + Regularized Movie Bias $b_i$ + User Bias $b_u$ + Age Bias $b_a$_
+### _Algorithm 6: Average Rating $\mu$ + Regularized Movie Bias $rb_i$ + User Bias $rb_u$ + Age Bias $rb_a$_
 
 
 
@@ -364,6 +487,9 @@ rmse_tibble <- tibble(Algorithm = "Baseline: Average Rating", RMSE = baseline_rm
 
 
 > The lm function offers a convenient way of fitting this linear model but will be time and space consuming in this case.
+
+> NOTE: we use the penalized least squares equation and not train() to train algorithms with as we are not constrained by time and/or computer capability
+
 
 >"In this paper, we suggested methods that lower the RMSE to 0.8870."
 

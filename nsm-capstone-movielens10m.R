@@ -235,18 +235,11 @@ edx_figure10
 
 
 
-## Content-Based Algorithm
+# Content-Based Algorithm
 
 
 
-
-
-
-
-
-
-
-# we separate the edx set into a train set and a test set
+# we use the edx set to train and test content-based algorithms
 
 options(digits = 5)
 set.seed(10, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
@@ -260,18 +253,20 @@ test_set <- temporary_set |>
 train_set <- rbind(train_set, anti_join(temporary_set, test_set))
 
 
-# we define a function of the rmse by which we will measure the discrepancy between the actual ratings in the test set and the ratings predicted by each trained algorithm
+
+# we define a function that calculates the rmse
 
 rmse <- function(actual_rating, predicted_rating){
   sqrt(mean((actual_rating - predicted_rating)^2))
 }
 
 
-# NOTE: we can use train() to conveniently train algorithms with if we are not constrained by time and/or computer capability
+
+# NOTE: we use the penalized least squares equation and not train() to train algorithms with as we are constrained by time and/or computer capability
+
 
 
 # we define and test the baseline algorithm: average rating mu
-# this algorithm simply predicts that the average rating mu in the train set will be the rating of users for movies in the test set as a basis of comparison for the succeeding algorithms
 
 mu <- mean(train_set$rating)
 mu
@@ -284,19 +279,21 @@ baseline_rmse
 rmse_tibble <- tibble(Algorithm = "Baseline: Average Rating", RMSE = baseline_rmse)
 
 
+
 # we train and test algorithm 1: average rating mu + movie bias bi
-# this algorithm predicts that the average rating mu plus a movie bias bi derived from the average rating per movie will be the rating of users for a particular movie
-# this is based on our previous observation that users rate certain movies more than others
 
 bi_tibble <- train_set |>
   group_by(movieId) |>
   summarize(bi = mean(rating - mu))
-# A tibble: 10,677 × 2
-#   movieId         bi
-#     <int>        <dbl>
-# 1       1       0.419
-# 2       2      -0.309
-# ...
+head(bi_tibble, n = 5)
+# # A tibble: 5 × 2
+#   movieId     bi
+#     <int>  <dbl>
+# 1       1  0.419
+# 2       2 -0.309
+# 3       3 -0.366
+# 4       4 -0.645
+# 5       5 -0.442
 algorithm1_rating <- test_set |>
   left_join(bi_tibble, by = "movieId") |> # adds the bi column
   mutate(algorithm1_rating = mu + bi) |>
@@ -304,25 +301,24 @@ algorithm1_rating <- test_set |>
 algorithm1_rmse <- rmse(test_set$rating, algorithm1_rating)
 algorithm1_rmse
 # [1] 0.94292 # lower than baseline_rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "1: Average Rating + Movie Bias", RMSE = algorithm1_rmse))
-# we add genre as another possible predictor
+
 
 
 # we train and test algorithm 2: average rating mu + movie bias bi + genre bias bg
-# this algorithm predicts that the average rating mu plus the movie bias bi plus the genre bias bg derived from the average rating per genre will be the rating of users for a particular movie
-# this is based on our previous observation that users rate certain genres more than others
 
 bg_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
   group_by(genres) |>
   summarize(bg = mean(rating - mu - bi))
-# A tibble: 797 × 2
-# genres                                                    bg
-# <chr>                                                  <dbl>
+head(bg_tibble, n = 5)
+# # A tibble: 5 × 2
+#   genres                                                    bg
+#   <chr>                                                  <dbl>
 # 1 (no genres listed)                                  0
 # 2 Action                                             -8.97e-17
 # 3 Action|Adventure                                   -1.91e-15
-# ...
+# 4 Action|Adventure|Animation|Children|Comedy         -4.81e-16
+# 5 Action|Adventure|Animation|Children|Comedy|Fantasy  4.47e-17
 algorithm2_rating <- test_set |>
   left_join(bi_tibble, by = "movieId") |>
   left_join(bg_tibble, by = "genres") |>
@@ -332,13 +328,14 @@ algorithm2_rmse <- rmse(test_set$rating, algorithm2_rating)
 algorithm2_rmse
 # [1] 0.94292 # same as the algorithm1_rmse
 
-# we retrain and retest using only the highest-rated genre of each genre combination
+# we retrain and retest using only the top-rated genre of each genre combination
 genre_vector <- c("Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror",  "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western") # from https://files.grouplens.org/datasets/movielens/ml-10m-README.html
 genre_rating <- sapply(genre_vector, function(g){
   train_set_a <- train_set |> filter(str_detect(genres, g) == TRUE)
   mean(train_set_a$rating)
 })
 genre_tibble <- tibble(genre = genre_vector, rating = genre_rating) |> arrange(-rating) # arranges the genres according to decreasing rating
+genre_tibble
 # A tibble: 18 × 2
 #   genre       rating
 #   <chr>        <dbl>
@@ -362,7 +359,7 @@ genre_tibble <- tibble(genre = genre_vector, rating = genre_rating) |> arrange(-
 # 18 Horror        3.27
 bg_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
-  mutate(h_genre = case_when(str_detect(genres, "Film-Noir") ~ "Film-Noir",
+  mutate(t_genre = case_when(str_detect(genres, "Film-Noir") ~ "Film-Noir",
                              str_detect(genres, "Documentary") ~ "Documentary",
                              str_detect(genres, "War") ~ "War",
                              str_detect(genres, "Mystery") ~ "Mystery",
@@ -379,20 +376,21 @@ bg_tibble <- train_set |>
                              str_detect(genres, "Action") ~ "Action",
                              str_detect(genres, "Children") ~ "Children",
                              str_detect(genres, "Sci-Fi") ~ "Sci-Fi",
-                             str_detect(genres, "Horror") ~ "Horror",
-                             str_detect(genres, "IMAX") ~ "(no genres listed)", # categorizes  movies with only IMAX as genre as (no genres listed)
-                             str_detect(genres, "(no genres listed)") ~ "(no genres listed)")) |> # extracts the highest-rated genre of each genre combination
-  group_by(h_genre) |>
+                             str_detect(genres, "Horror") ~ "Horror")) |>
+  group_by(t_genre) |>
   summarize(bg = mean(rating - mu - bi))
-# A tibble: 19 × 2
-#   h_genre                   bg
-#   <chr>                  <dbl>
-# 1 (no genres listed)  5.84e-17
-# 2 Action              2.34e-16
-# ...
+head(bg_tibble, n = 5)
+# # A tibble: 5 × 2
+#   t_genre          bg
+#   <chr>         <dbl>
+# 1 Action     2.34e-16
+# 2 Adventure  2.60e-15
+# 3 Animation  3.45e-15
+# 4 Children  -1.71e-16
+# 5 Comedy     1.10e-15
 algorithm2_rating <- test_set |>
   left_join(bi_tibble, by = "movieId") |>
-  mutate(h_genre = case_when(str_detect(genres, "Film-Noir") ~ "Film-Noir",
+  mutate(t_genre = case_when(str_detect(genres, "Film-Noir") ~ "Film-Noir",
                              str_detect(genres, "Documentary") ~ "Documentary",
                              str_detect(genres, "War") ~ "War",
                              str_detect(genres, "Mystery") ~ "Mystery",
@@ -409,10 +407,8 @@ algorithm2_rating <- test_set |>
                              str_detect(genres, "Action") ~ "Action",
                              str_detect(genres, "Children") ~ "Children",
                              str_detect(genres, "Sci-Fi") ~ "Sci-Fi",
-                             str_detect(genres, "Horror") ~ "Horror",
-                             str_detect(genres, "IMAX") ~ "(no genres listed)",
-                             str_detect(genres, "(no genres listed)") ~ "(no genres listed)")) |>
-  left_join(bg_tibble, by = "h_genre") |>
+                             str_detect(genres, "Horror") ~ "Horror")) |>
+  left_join(bg_tibble, by = "t_genre") |>
   mutate(algorithm2_rating = mu + bi + bg) |>
   pull(algorithm2_rating)
 algorithm2_rmse <- rmse(test_set$rating, algorithm2_rating)
@@ -422,9 +418,8 @@ rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "2: Average Rating + Movie 
 # we replace genre with year of release as another possible predictor
 
 
+
 # we train and test algorithm 3: average rating mu + movie bias bi + release bias br
-# this algorithm predicts that the average rating mu plus the movie bias bi plus the release bias br derived from the average rating per year of release will be the rating of users for a particular movie
-# this is based on our previous observation that users rate movies from certain years of release more than others
 
 br_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
@@ -433,12 +428,15 @@ br_tibble <- train_set |>
   mutate(year_rel = as.integer(year_rel)) |>
   group_by(year_rel) |>
   summarize(br = mean(rating - mu - bi))
-# A tibble: 94 × 2
-#     year_rel     br
-#     <int>     <dbl>
+head(br_tibble, n = 5)
+# # A tibble: 5 × 2
+#   year_rel        br
+#       <int>     <dbl>
 # 1     1915 -5.71e-17
 # 2     1916 -5.48e-17
-# ...
+# 3     1917 -1.53e-17
+# 4     1918 -3.22e-18
+# 5     1919  2.25e-17
 algorithm3_rating <- test_set |>
   left_join(bi_tibble, by = "movieId") |>
   mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
@@ -452,6 +450,14 @@ algorithm3_rmse
 # [1] 0.94292 # same as the algorithm1_rmse
 rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "3: Average Rating + Movie Bias + Release Bias", RMSE = algorithm3_rmse))
 # we replace year of release with user as another possible predictor
+
+
+
+
+
+
+
+
 
 
 # we train and test algorithm 4: average rating mu + movie bias bi + user bias bu
