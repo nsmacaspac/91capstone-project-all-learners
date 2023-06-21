@@ -108,7 +108,7 @@ rm(dl, ratings, movies, test_index, temp, movielens, removed)
 The edx set was used to examine user preferences and to train and test content-based algorithms to develop the recommendation system. It contained 9,000,055 movie ratings, each with 6 variables: userId, movieId, rating, timestamp, title and genres (fig. 1). UserIds and movieIds were unique to each of its 69,878 users and 10,677 movies, respectively.  Ratings ranged from 0.5 to 5 stars. Timestamps were rendered in Unix time. Titles and were captured manually according to how they appear in the movie database IMDb and included the years of movie release (GroupLens, n.d.).
 
 ```{r fig1, fig.cap = "First rows of the edx set."}
-include_graphics("fig1.png") # replaces head(edx, n = 5), which does not knit nicely
+include_graphics("fig1.png") # shows console output from the R script because it does not knit nicely
 ```
 
 On the other hand, the final holdout test set was reserved to evaluate the recommendation system. It contained 999,999 movie ratings, each with the aforementioned 6 variables. We circle back to this set in a later section.
@@ -252,7 +252,7 @@ edx_figure9
 
 Unlike hours, days and months, the years of rating are not recurring units of time that we expect in future data. Instead of using them as is, the relative ages of movies were calculated from the years of rating and release through stringr and lubridate functions. A plot of user ratings against relative ages of a random sample of the data exhibited the preference of users to rate movies within 10 years of their release (fig. 10).
 
-```{r fig10, fig.cap = "Scatterplot of user ratings vs relative ages of movies of a random sample of the edx set"}
+```{r fig10, fig.cap = "Scatterplot of user ratings vs relative ages of movies of a random sample of the edx set."}
 edx_figure10 <- edx[sample_index,] |>
   mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
   mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
@@ -272,7 +272,7 @@ edx_figure10
 ## Content-Based Algorithm
 
 
-Given the biases observed in the contents of the edx set, the following were considered as possible predictors of the actual ratings in the recommendation system: movieId, genre, year of release, userId and relative age. Algorithms based on these predictors were progressively trained on 90% of the edx set (train set) by calculating the deviation caused by the predictor from the average using the penalized least squares equation (Irizarry 2022, Koren 2009). Then, they were tested on the remaining 10% of the edx set (test set) for the the RMSE of their predicted ratings from the actual ones. The RMSE was the preferred measure of error as it results in the same units as the given ones (Irizarry 2022).
+Given the biases observed in the contents of the edx set, the following were considered as possible predictors of the actual ratings in the recommendation system: movieId, genre, year of release, userId and relative age. Algorithms based on these predictors were progressively trained on 90% of the edx set (train set) by calculating the deviation caused by the predictor from the average using the penalized least squares estimation (Irizarry 2022, Koren 2009). Then, they were tested on the remaining 10% of the edx set (test set) for the the RMSE of their predicted ratings from the actual ones. The RMSE was the preferred measure of error as it results in the same units as the given ones (Irizarry 2022).
 
 ```{r}
 options(digits = 5)
@@ -295,7 +295,7 @@ rmse <- function(actual_rating, predicted_rating){
 ### _Baseline Algorithm: Average Rating $\mu$_
 
 
-The baseline algorithm was constructed on the simple assumption that the average rating $\mu$ of 3.5124 in the train set predicts ratings with the least error from the actual ratings in the testing set. This gave an RMSE of 1.0593, which served as the basis of comparison for the RMSE of the succeeding algorithms.
+The Baseline Algorithm was constructed on the simple assumption that the average rating $\mu$ of 3.5124 in the train set predicts ratings with the least error from the actual ratings in the testing set. This gave an RMSE of 1.0593, which served as the basis of comparison for the RMSE of the succeeding algorithms (tab. 1).
 
 ```{r, echo = TRUE}
 mu <- mean(train_set$rating)
@@ -303,6 +303,7 @@ mu
 baseline_rmse <- rmse(test_set$rating, mu)
 baseline_rmse
 ```
+
 ```{r}
 # we tabulate the rmses
 rmse_tibble <- tibble(Algorithm = "Baseline: Average Rating", RMSE = baseline_rmse)
@@ -312,7 +313,7 @@ rmse_tibble <- tibble(Algorithm = "Baseline: Average Rating", RMSE = baseline_rm
 ### _Algorithm 1: Average Rating $\mu$ + Movie Bias $b_i$_
 
 
-The baseline algorithm predicted rating was improved by adding the deviation from the average caused by the observed movie bias. The bias of each movie $b_i$ was calculated from the average of the movie ratings less the $\mu$. This lowered the RMSE of the prediction to 0.94292.
+The Baseline Algorithm predicted rating was improved by adding the deviation from the average caused by the observed movie bias. The bias of each movie $b_i$ was estimated from the average of the movie ratings less the $\mu$ (Irizarry 2022). This lowered the RMSE of the prediction to 0.94292 (tab. 1).
 
 ```{r, echo = TRUE}
 bi_tibble <- train_set |>
@@ -326,6 +327,7 @@ algorithm1_rating <- test_set |>
 algorithm1_rmse <- rmse(test_set$rating, algorithm1_rating)
 algorithm1_rmse
 ```
+
 ```{r}
 rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "1: Average Rating + Movie Bias", RMSE = algorithm1_rmse))
 ```
@@ -334,7 +336,7 @@ rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "1: Average Rating + Movie 
 ### _Algorithm 2: Average Rating $\mu$ + Movie Bias $b_i$ + Genre Bias $b_g$_
 
 
-The algorithm 1 predicted ratings were amended with the deviation from the average caused by the observed genre bias. The bias of each genre combination $b_g$ was calculated from the average of the genre-combination ratings less the $\mu$ and $b_i$. However, this did not significantly affect the RMSE of the prediction, which remained at 0.94292.
+The Algorithm 1 predicted ratings were amended with the deviation from the average caused by the observed genre bias. The bias of each genre combination $b_g$ was estimated from the average of the genre-combination ratings less the $\mu$ and $b_i$. However, this did not significantly affect the RMSE of the prediction, which remained at 0.94292 (tab. 1).
 
 ```{r, echo = TRUE}
 bg_tibble <- train_set |>
@@ -351,16 +353,9 @@ algorithm2_rmse <- rmse(test_set$rating, algorithm2_rating)
 algorithm2_rmse
 ```
 
-Hence, the top genre was extracted from each genre combination with the str_detect function. Then, the $b_g$ was recalculated from the average of the top-genre ratings less the $\mu$ and $b_i$. Still, this did not significantly affect the RMSE of the prediction, which remained at 0.94292.
+Hence, genres were arranged from highest to lowest rating. Then, the top genre was extracted from each genre combination with the str_detect function. The $b_g$ was recalculated from the average of the top-genre ratings less the $\mu$ and $b_i$. Still, this did not significantly affect the RMSE of the prediction, which remained at 0.94292 (tab. 1).
 
 ```{r, echo = TRUE}
-genre_vector <- c("Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror",  "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western") # (GroupLens, n.d.)
-genre_rating <- sapply(genre_vector, function(g){
-  train_set_a <- train_set |> filter(str_detect(genres, g) == TRUE)
-  mean(train_set_a$rating)
-})
-genre_tibble <- tibble(genre = genre_vector, rating = genre_rating) |> arrange(-rating) # arranges the genres according to decreasing rating
-genre_tibble
 bg_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
   mutate(t_genre = case_when(str_detect(genres, "Film-Noir") ~ "Film-Noir",
@@ -410,6 +405,7 @@ algorithm2_rating <- test_set |>
 algorithm2_rmse <- rmse(test_set$rating, algorithm2_rating)
 algorithm2_rmse
 ```
+
 ```{r}
 rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "2: Average Rating + Movie Bias + Genre Bias", RMSE = algorithm2_rmse))
 ```
@@ -418,7 +414,7 @@ rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "2: Average Rating + Movie 
 ### _Algorithm 3: Average Rating $\mu$ + Movie Bias $b_i$ + Release Bias $b_r$_
 
 
-The algorithm 1 predicted ratings were updated with the deviation from the average caused by the observed year-of-release bias in place of the genre bias. The bias of each year of release $b_r$ was calculated from the average of the year-of-release ratings less the $\mu$ and $b_i$. However, this did not significantly affect the RMSE of the prediction as well, which remained at 0.94292.
+The Algorithm 1 predicted ratings were updated with the deviation from the average caused by the observed bias from the years of release in place of that from the genres. The bias of each year of release $b_r$ was estimated from the average of the year-of-release ratings less the $\mu$ and $b_i$. However, this did not significantly affect the RMSE of the prediction as well, which remained at 0.94292 (tab. 1).
 
 ```{r, echo = TRUE}
 br_tibble <- train_set |>
@@ -440,8 +436,135 @@ algorithm3_rating <- test_set |>
 algorithm3_rmse <- rmse(test_set$rating, algorithm3_rating)
 algorithm3_rmse
 ```
+
 ```{r}
 rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "3: Average Rating + Movie Bias + Release Bias", RMSE = algorithm3_rmse))
+```
+
+
+### _Algorithm 4: Average Rating $\mu$ + Movie Bias $b_i$ + User Bias $b_u$_
+
+
+The Algorithm 1 predicted ratings were enhanced by adding the deviation from the average caused by the observed user bias in place of that from the year of release. The bias of each user $b_u$ was estimated from the average of the user ratings less the $\mu$ and $b_i$ (Irizarry 2022). This further lowered the RMSE of the prediction to 0.86458, which narrowly breached the required RMSE of 0.86490 (tab. 1).
+
+```{r, echo = TRUE}
+bu_tibble <- train_set |>
+  left_join(bi_tibble, by = "movieId") |>
+  group_by(userId) |>
+  summarize(bu = mean(rating - mu - bi))
+head(bu_tibble, n = 5)
+algorithm4_rating <- test_set |>
+  left_join(bi_tibble, by = "movieId") |>
+  left_join(bu_tibble, by = "userId") |>
+  mutate(algorithm4_rating = mu + bi + bu) |>
+  pull(algorithm4_rating)
+algorithm4_rmse <- rmse(test_set$rating, algorithm4_rating)
+algorithm4_rmse
+```
+
+```{r}
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "(Required RMSE)", RMSE = 0.86490))
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "4: Average Rating + Movie Bias + User Bias", RMSE = algorithm4_rmse))
+```
+
+
+### _Algorithm 5: Average Rating $\mu$ + Movie Bias $b_i$ + User Bias $b_u$ + Age Bias $b_a$_
+
+
+The Algorithm 4 predicted ratings were enhanced by adding the deviation from the average caused by the last observed bias from the relative ages of movies. The bias of each relative age $b_a$ was estimated from the average of the relative-age ratings less the $\mu$, $b_i$ and $b_u$. This slightly lowered the RMSE of the prediction to 0.86414, which is below the required RMSE of 0.86490 (tab. 1).
+
+```{r, echo = TRUE}
+ba_tibble <- train_set |>
+  left_join(bi_tibble, by = "movieId") |>
+  left_join(bu_tibble, by = "userId") |>
+  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>  mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
+  mutate(year_rel = as.integer(year_rel)) |>
+  mutate(time = as_datetime(timestamp)) |>
+  mutate(year_rat = year(time)) |>
+  mutate(rel_age = year_rat - year_rel) |>
+  group_by(rel_age) |>
+  summarize(ba = mean(rating - mu - bi - bu))
+head(ba_tibble, n = 5)
+algorithm5_rating <- test_set |>
+  left_join(bi_tibble, by = "movieId") |>
+  left_join(bu_tibble, by = "userId") |>
+  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
+  mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
+  mutate(year_rel = as.integer(year_rel)) |>
+  mutate(time = as_datetime(timestamp)) |>
+  mutate(year_rat = year(time)) |>
+  mutate(rel_age = year_rat - year_rel) |>
+  left_join(ba_tibble, by = "rel_age") |>
+  mutate(algorithm5_rating = mu + bi + bu + ba) |>
+  pull(algorithm5_rating)
+algorithm5_rmse <- rmse(test_set$rating, algorithm5_rating)
+algorithm5_rmse
+```
+
+```{r}
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "5: Average Rating + Movie Bias + User Bias + Age Bias", RMSE = algorithm5_rmse))
+```
+
+Algorithm 5 was reviewed for the explainability of the top movies predicted by its movie bias $b_i$ to ensure user confidence in the predictions (Rocca 2019; Irizarry 2022). However, the top movies were questionable and came with very low numbers of ratings (fig. 11).
+
+```{r fig11, fig.cap = "Top movies predicted by the movie bias $b_i$ of Algorithm 5."}
+include_graphics("fig11.png") # shows console output from the R script because it does not knit nicely
+```
+
+
+### _Algorithm 6: Average Rating $\mu$ + Regularized Movie Bias $rb_i$ + User Bias $rb_u$ + Age Bias $rb_a$_
+
+
+The biases in Algorithm 5 were adjusted for the number of ratings using regularization, which penalizes big estimates from small sample sizes with $\lambda$ and avoids overfitting of the algorithm (Koren 2008, 427; Koren 2009, 2). Cross-validation resulted in a $\lambda$ of 5.3. This was used for the regularization of the biases, which refined the RMSE to 0.86353 (tab. 1).
+
+```{r}
+# we skip the lambda cross-validation in the R script for faster knitting
+lambda <- 5.3
+```
+
+```{r, echo = TRUE}
+r_bi_tibble <- train_set |>
+  group_by(movieId) |>
+  summarize(r_bi = sum(rating - mu)/(lambda + n()))
+r_bu_tibble <- train_set |>
+  left_join(r_bi_tibble, by = "movieId") |>
+  group_by(userId) |>
+  summarize(r_bu = sum(rating - mu - r_bi)/(lambda + n()))
+r_ba_tibble <- train_set |>
+  left_join(r_bi_tibble, by = "movieId") |>
+  left_join(r_bu_tibble, by = "userId") |>
+  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
+  mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
+  mutate(year_rel = as.integer(year_rel)) |>
+  mutate(time = as_datetime(timestamp)) |>
+  mutate(year_rat = year(time)) |>
+  mutate(rel_age = year_rat - year_rel) |>
+  group_by(rel_age) |>
+  summarize(r_ba = sum(rating - mu - r_bi - r_bu)/(lambda + n()))
+algorithm6_rating <- test_set |>
+  left_join(r_bi_tibble, by = "movieId") |>
+  left_join(r_bu_tibble, by = "userId") |>
+  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
+  mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
+  mutate(year_rel = as.integer(year_rel)) |>
+  mutate(time = as_datetime(timestamp)) |>
+  mutate(year_rat = year(time)) |>
+  mutate(rel_age = year_rat - year_rel) |>
+  left_join(r_ba_tibble, by = "rel_age") |>
+  mutate(algorithm6_rating = mu + r_bi + r_bu + r_ba) |>
+  pull(algorithm6_rating)
+algorithm6_rmse <- rmse(test_set$rating, algorithm6_rating)
+algorithm6_rmse
+```
+
+```{r}
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "6: Average Rating + Regularized Movie Bias + User Bias + Age Bias", RMSE = algorithm6_rmse))
+```
+
+The top movies predicted by the regularized movie bias $rb_i$ of Algorithm 6 were more rational and came with very high numbers of ratings (fig. 12).
+
+```{r fig12, fig.cap = "Top movies predicted by the regularized movie bias $rb_i$ of Algorithm 6."}
+include_graphics("fig12.png") # shows console output from the R script because it does not knit nicely
 ```
 
 
@@ -453,34 +576,12 @@ rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "3: Average Rating + Movie 
 
 
 
-### _Algorithm 4: Average Rating $\mu$ + Movie Bias $b_i$ + User Bias $b_u$_
-
-
-### _Algorithm 5: Average Rating $\mu$ + Movie Bias $b_i$ + User Bias $b_u$ + Age Bias $b_a$_
-
-
-### _Algorithm 6: Average Rating $\mu$ + Regularized Movie Bias $rb_i$ + User Bias $rb_u$ + Age Bias $rb_a$_
-
-
-
-
-
-
-
-
-
-
-><TABLE 1> (Madhugiri 2022)
-
->"Explainability is another key point of the success of recommendation algorithms. Indeed, it has been proven that if users do not understand why they had been recommended a specific item, they tend to lose confidence in the recommender system." (Rocca 2019)
-
->"In order to combat overfitting the sparse rating data, models are regularized  so estimates are shrunk towards baseline defaults. Regularization is controlled by constants, which are denoted as: lambda1, lambda2, ..." (Koren 2008, 427)
-
->"The regularizing term lambda avoid overfitting by penalizing magnitudes of the parameters." (Koren 2009, 2)
-
-
 ## Recommendation System
 
+
+```{r tab1}
+kable(rmse_tibble, caption = "Root mean squared errors (RMSEs) of the algorithms.")
+```
 
 
 ## Conclusion

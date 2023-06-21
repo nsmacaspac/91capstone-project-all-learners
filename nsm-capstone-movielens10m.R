@@ -273,9 +273,10 @@ mu
 # [1] 3.5124
 baseline_rmse <- rmse(test_set$rating, mu)
 baseline_rmse
-# [1] 1.0593
+# [1] 1.0593 # serves as the basis of comparison for the rmse of the succeeding algorithms
 
 # we tabulate the rmses
+
 rmse_tibble <- tibble(Algorithm = "Baseline: Average Rating", RMSE = baseline_rmse)
 
 
@@ -301,6 +302,7 @@ algorithm1_rating <- test_set |>
 algorithm1_rmse <- rmse(test_set$rating, algorithm1_rating)
 algorithm1_rmse
 # [1] 0.94292 # lower than baseline_rmse
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "1: Average Rating + Movie Bias", RMSE = algorithm1_rmse))
 
 
 
@@ -329,6 +331,7 @@ algorithm2_rmse
 # [1] 0.94292 # same as the algorithm1_rmse
 
 # we retrain and retest using only the top-rated genre of each genre combination
+
 genre_vector <- c("Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror",  "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western") # from https://files.grouplens.org/datasets/movielens/ml-10m-README.html
 genre_rating <- sapply(genre_vector, function(g){
   train_set_a <- train_set |> filter(str_detect(genres, g) == TRUE)
@@ -453,27 +456,21 @@ rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "3: Average Rating + Movie 
 
 
 
-
-
-
-
-
-
-
 # we train and test algorithm 4: average rating mu + movie bias bi + user bias bu
-# this algorithm predicts that the average rating mu plus a movie bias bi plus a user bias bu derived from the average rating per user will be the rating of a particular user for a particular movie
-# this is based on our previous observation that certain users rate more than others
 
 bu_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
   group_by(userId) |>
   summarize(bu = mean(rating - mu - bi))
-# A tibble: 69,878 × 2
-#   userId      bu
-#   <int>       <dbl>
-# 1      1     1.66
-# 2      2    -0.130
-# ...
+head(bu_tibble, n = 5)
+# # A tibble: 5 × 2
+#   userId     bu
+#     <int>  <dbl>
+# 1      1  1.66
+# 2      2 -0.130
+# 3      3  0.168
+# 4      4  0.659
+# 5      5  0.160
 algorithm4_rating <- test_set |>
   left_join(bi_tibble, by = "movieId") |>
   left_join(bu_tibble, by = "userId") |>
@@ -482,14 +479,13 @@ algorithm4_rating <- test_set |>
 algorithm4_rmse <- rmse(test_set$rating, algorithm4_rating)
 algorithm4_rmse
 # [1] 0.86458 # lower than the algorithm1_rmse and the required rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "Required RMSE", RMSE = 0.86490))
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "(Required RMSE)", RMSE = 0.86490))
 rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "4: Average Rating + Movie Bias + User Bias", RMSE = algorithm4_rmse))
 # we add relative age of the movie as another possible predictor
 
 
+
 # we train and test algorithm 5: average rating mu + movie bias bi + user bias bu + age bias ba
-# this algorithm predicts that the average rating mu plus a movie bias bi plus a user bias bu plus a age bias ba derived from the average rating per relative age of the movie will be the rating of a particular user for a particular movie
-# this is based on our previous observation that users rate movies within certain relative ages more than others
 
 ba_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
@@ -501,12 +497,15 @@ ba_tibble <- train_set |>
   mutate(rel_age = year_rat - year_rel) |>
   group_by(rel_age) |>
   summarize(ba = mean(rating - mu - bi - bu))
-# A tibble: 96 × 2
-#   rel_age     ba
+head(ba_tibble, n = 5)
+# # A tibble: 5 × 2
+#   rel_age      ba
 #     <dbl>   <dbl>
-# 1     -2  0.0228
-# 2     -1  0.147
-# ...
+# 1      -2  0.0228
+# 2      -1  0.147
+# 3       0  0.0759
+# 4       1  0.0271
+# 5       2 -0.0107
 algorithm5_rating <- test_set |>
   left_join(bi_tibble, by = "movieId") |>
   left_join(bu_tibble, by = "userId") |>
@@ -524,20 +523,22 @@ algorithm5_rmse
 # [1] 0.86414 # lower than algorithm4_rmse and the required rmse
 rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "5: Average Rating + Movie Bias + User Bias + Age Bias", RMSE = algorithm5_rmse))
 
-
-# we evaluate algorithm 5 based on the the "best" movies predicted by the movie bias bi
+# we evaluate algorithm 5 based on the the top movies predicted by its movie bias bi
 
 title_tibble <- edx |>
   as_tibble() |>
   select(movieId, title) |>
   distinct()
-# A tibble: 10,677 × 2
-# movieId title
-# <int> <chr>
+head(title_tibble, n = 5)
+# # A tibble: 5 × 2
+#   movieId title
+#      <int> <chr>
 # 1     122 Boomerang (1992)
 # 2     185 Net, The (1995)
-# ...
-train_set |>
+# 3     292 Outbreak (1995)
+# 4     316 Stargate (1994)
+# 5     329 Star Trek: Generations (1994)
+train_set |> # fig11 in the rmd file
   count(movieId) |>
   left_join(title_tibble, by = "movieId") |>
   left_join(bi_tibble, by = "movieId") |>
@@ -555,18 +556,15 @@ train_set |>
 # 8                               Human Condition II, The (Ningen no joken II) (1959) 1.320946 3
 # 9  Who's Singin' Over There? (a.k.a. Who Sings Over There) (Ko to tamo peva) (1980) 1.237613 4
 # 10                            Human Condition III, The (Ningen no joken III) (1961) 1.237613 4
-# the "best" movies are unheard of and come with very low numbers of ratings
-# we adjust the movie bias bi and other predictors in algorithm 5 for the number of ratings using regularization
+# questionable and with very low numbers of ratings
+# we adjust biases in algorithm 5 for the number of ratings using regularization
 
 
-###############
-# ALGORITHM 6 #
-###############
-# we train and test algorithm 6: average rating mu + regularized movie bias r_bi + regularized user bias r_bu + regularized age bias r_ba
-# this algorithm predicts that the average rating mu plus the movie bias adjusted or regularized for the number of ratings per movie with a factor lambda r_bi plus the user bias also regularized for the number of ratings per user with a factor lambda r_bu plus the age bias also regularized for the number of ratings per relative age of the movie with a factor lambda r_ba will be the rating of users for a particular movie
-# it improves on algorithm 5
 
-# we optimize the lambda such that it minimizes the rmse
+# we train and test algorithm 6: average rating mu + regularized movie bias r_bi + user bias r_bu + age bias r_ba
+
+# we find the lambda that minimizes the rmse using cross-validation
+
 lambda_vector <- seq(4.5, 6.5, 0.1)
 lambda_rmse <- sapply(lambda_vector, function(l){
   r_bi_tibble <- train_set |>
@@ -605,6 +603,7 @@ lambda <- lambda_vector[which.min(lambda_rmse)]
 # [1] 5.3
 
 # we use the final lambda
+
 r_bi_tibble <- train_set |>
   group_by(movieId) |>
   summarize(r_bi = sum(rating - mu)/(lambda + n()))
@@ -639,20 +638,10 @@ algorithm6_rmse <- rmse(test_set$rating, algorithm6_rating)
 algorithm6_rmse
 # [1] 0.86353 # lower than the algorithm5_rmse and the required rmse
 rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "6: Average Rating + Regularized Movie Bias + Regularized User Bias + Regularized Age Bias", RMSE = algorithm6_rmse))
-if(!require(kableExtra)) install.packages("kableExtra", repos = "http://cran.us.r-project.org")
-library(kableExtra)
-kbl(rmse_tibble) |> # Table 1. Root Mean Squared Errors (RMSEs) of the Algorithms
-  kable_styling() |>
-  row_spec(0, color = "darkblue") |>
-  row_spec(5, color = "lightgray")
-###############
-# ALGORITHM 6 #
-###############
 
+# we evaluate algorithm 6 based on the the top movies predicted by its regularized movie bias r_bi
 
-# we evaluate algorithm 6 based on the the best movies predicted by the regularized movie bias r_bi
-
-train_set |>
+train_set |> # fig12 in the rmd file
   count(movieId) |>
   left_join(title_tibble, by = "movieId") |>
   left_join(r_bi_tibble, by = "movieId") |>
@@ -670,34 +659,23 @@ train_set |>
 # 8                          Third Man, The (1949) 0.7988919  2671
 # 9                        Double Indemnity (1944) 0.7969676  1928
 # 10   Seven Samurai (Shichinin no samurai) (1954) 0.7968523  4658
-# the best movies are well known and come with high numbers of ratings compared to those predicted by the movie bias bi of algorithm 5
+# rational and with very high numbers of ratings
 
 
-# we evaluate the robustness of algorithm 6 on new data using bootstrapping
 
-cv_algorithm6_rmses <- c()
-for(i in 1:5){
-  cv_test_index <- sample(1:nrow(edx), size = 1000000, replace = TRUE)
-  cv_test_set <- edx[cv_test_index,]
-  cv_algorithm6_rating <- cv_test_set |>
-    left_join(r_bi_tibble, by = "movieId") |>
-    left_join(r_bu_tibble, by = "userId") |>
-    mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
-    mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
-    mutate(year_rel = as.integer(year_rel)) |>
-    mutate(time = as_datetime(timestamp)) |>
-    mutate(year_rat = year(time)) |>
-    mutate(rel_age = year_rat - year_rel) |>
-    left_join(r_ba_tibble, by = "rel_age") |>
-    mutate(cv_algorithm6_rating = mu + r_bi + r_bu + r_ba) |>
-    pull(cv_algorithm6_rating)
-  cv_algorithm6_rmse <- rmse(cv_test_set$rating, cv_algorithm6_rating)
-  cv_algorithm6_rmses <- c(cv_algorithm6_rmses, cv_algorithm6_rmse)
-}
-cv_algorithm6_rmses
-mean(cv_algorithm6_rmses)
-# around 0.857 # still lower than the the required rmse
-# we use algorithm 6 as the final algorithm
+
+
+
+
+
+
+
+# Recommendation System
+
+
+
+kable(rmse_tibble, caption = "Root mean squared errors (RMSEs) of the algorithms.") # tab1 in the rmd file
+
 
 
 # final_holdout_test Set
