@@ -1,10 +1,11 @@
 # CONTENT-BASED RECOMMENDATION SYSTEM DEVELOPED FROM THE MOVIELENS 10M DATASET
 # NICELLE SERNADILLA MACASPAC
+# JUNE 2023
 # RUNNING TIME: 7 minutes
 
 
 
-# Introduction
+# INTRODUCTION
 
 
 
@@ -12,7 +13,7 @@
 
 
 
-# MovieLens 10M Dataset
+# MOVIELENS 10M DATASET
 
 
 
@@ -88,7 +89,7 @@ rm(dl, ratings, movies, test_index, temp, movielens, removed)
 
 # we use the edx set to examine user preferences and to train and test content-based algorithms to develop the recommendation system
 
-head(edx, n = 5) # fig1 in the rmd file
+head(edx, n = 5) # fig1 in the Rmd file
 str(edx)
 # 'data.frame':	9000055 obs. of  6 variables:
 # $ userId   : int  1 1 1 1 1 1 1 1 1 1 ...
@@ -119,7 +120,7 @@ str(final_holdout_test)
 
 
 
-# User Preference
+# USER PREFERENCE
 
 
 
@@ -235,7 +236,7 @@ edx_figure10
 
 
 
-# Content-Based Algorithm
+# CONTENT-BASED ALGORITHM
 
 
 
@@ -254,7 +255,7 @@ train_set <- rbind(train_set, anti_join(temporary_set, test_set))
 
 
 
-# we define a function that calculates the rmse
+# we define a function that calculates the RMSE
 
 rmse <- function(actual_rating, predicted_rating){
   sqrt(mean((actual_rating - predicted_rating)^2))
@@ -262,7 +263,7 @@ rmse <- function(actual_rating, predicted_rating){
 
 
 
-# NOTE: we use the penalized least squares equation and not train() to train algorithms with as we are constrained by time and/or computer capability
+# NOTE: we use the penalized least squares estimation instead of lm() to train algorithms with as we are constrained by time and/or computer capability
 
 
 
@@ -275,7 +276,7 @@ baseline_rmse <- rmse(test_set$rating, mu)
 baseline_rmse
 # [1] 1.0593 # serves as the basis of comparison for the rmse of the succeeding algorithms
 
-# we tabulate the rmses
+# we tabulate the RMSEs
 
 rmse_tibble <- tibble(Algorithm = "Baseline: Average Rating", RMSE = baseline_rmse)
 
@@ -479,7 +480,7 @@ algorithm4_rating <- test_set |>
 algorithm4_rmse <- rmse(test_set$rating, algorithm4_rating)
 algorithm4_rmse
 # [1] 0.86458 # lower than the algorithm1_rmse and the required rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "(Required RMSE)", RMSE = 0.86490))
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "(Requirement)", RMSE = 0.86490))
 rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "4: Average Rating + Movie Bias + User Bias", RMSE = algorithm4_rmse))
 # we add relative age of the movie as another possible predictor
 
@@ -538,7 +539,7 @@ head(title_tibble, n = 5)
 # 3     292 Outbreak (1995)
 # 4     316 Stargate (1994)
 # 5     329 Star Trek: Generations (1994)
-train_set |> # fig11 in the rmd file
+train_set |> # fig11 in the Rmd file
   count(movieId) |>
   left_join(title_tibble, by = "movieId") |>
   left_join(bi_tibble, by = "movieId") |>
@@ -563,7 +564,7 @@ train_set |> # fig11 in the rmd file
 
 # we train and test algorithm 6: average rating mu + regularized movie bias r_bi + user bias r_bu + age bias r_ba
 
-# we find the lambda that minimizes the rmse using cross-validation
+# we find the lambda that minimizes the RMSE using cross-validation
 
 lambda_vector <- seq(4.5, 6.5, 0.1)
 lambda_rmse <- sapply(lambda_vector, function(l){
@@ -637,11 +638,11 @@ algorithm6_rating <- test_set |>
 algorithm6_rmse <- rmse(test_set$rating, algorithm6_rating)
 algorithm6_rmse
 # [1] 0.86353 # lower than the algorithm5_rmse and the required rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "6: Average Rating + Regularized Movie Bias + Regularized User Bias + Regularized Age Bias", RMSE = algorithm6_rmse))
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "6: Average Rating + Regularized (Movie Bias + User Bias + Age Bias)", RMSE = algorithm6_rmse))
 
 # we evaluate algorithm 6 based on the the top movies predicted by its regularized movie bias r_bi
 
-train_set |> # fig12 in the rmd file
+train_set |> # fig12 in the Rmd file
   count(movieId) |>
   left_join(title_tibble, by = "movieId") |>
   left_join(r_bi_tibble, by = "movieId") |>
@@ -663,30 +664,13 @@ train_set |> # fig12 in the rmd file
 
 
 
+# RECOMMENDATION SYSTEM
 
 
 
+# we use the final_holdout_test set to evaluate the final algorithm and recommendation system
 
-
-
-
-# Recommendation System
-
-
-
-kable(rmse_tibble, caption = "Root mean squared errors (RMSEs) of the algorithms.") # tab1 in the rmd file
-
-
-
-# final_holdout_test Set
-
-
-# we reserve the final_holdout_test set only to test the final algorithm
-
-
-# we predict the ratings in the the final_holdout_test set using the final algorithm 6: average rating mu + regularized movie bias r_bi + regularized user bias r_bu + regularized age bias r_ba
-
-holdout_rating <- final_holdout_test |>
+recommendation_rating <- final_holdout_test |>
   left_join(r_bi_tibble, by = "movieId") |>
   left_join(r_bu_tibble, by = "userId") |>
   mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
@@ -696,9 +680,13 @@ holdout_rating <- final_holdout_test |>
   mutate(year_rat = year(time)) |>
   mutate(rel_age = year_rat - year_rel) |>
   left_join(r_ba_tibble, by = "rel_age") |>
-  mutate(holdout_rating = mu + r_bi + r_bu + r_ba) |>
-  pull(holdout_rating)
-holdout_rmse <- rmse(final_holdout_test$rating, holdout_rating)
-holdout_rmse
-# [1] 0.86469 # lower than the required rmse of 0.86490
+  mutate(recommendation_rating = mu + r_bi + r_bu + r_ba) |>
+  pull(recommendation_rating)
+recommendation_rmse <- rmse(final_holdout_test$rating, recommendation_rating)
+recommendation_rmse
+# [1] 0.86469 # lower than the required rmse
+rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "Recommendation System", RMSE = recommendation_rmse))
+if(!require(knitr)) install.packages("knitr", repos = "http://cran.us.r-project.org")
+library(knitr)
+kable(rmse_tibble, caption = "Root mean squared errors (RMSEs) of the algorithms.") # tab1 in the Rmd file
 
