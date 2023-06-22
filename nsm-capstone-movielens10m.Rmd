@@ -272,7 +272,7 @@ edx_figure10
 ## Content-Based Algorithm
 
 
-Given the biases observed in the contents of the edx set, the following were considered as possible predictors of the actual ratings in the recommendation system: movieId, genre, year of release, userId and relative age. Algorithms based on these predictors were progressively trained on 90% of the edx set (train set) by calculating the deviation caused by the predictor from the average using the penalized least squares estimation (Irizarry 2022, Koren 2009). Thereafter, the algorithms were tested on the remaining 10% of the edx set (test set) for the the RMSE of their predicted ratings from the actual ones. The RMSE was the preferred measure of error as it results in the same units as the given ones (Irizarry 2022).
+Given the biases observed in the contents of the edx set, the following were considered as possible predictors of the actual ratings in the recommendation system: movieId, genre, year of release, userId and relative age of the movie. Algorithms based on these predictors were progressively trained on 90% of the edx set (train set) by calculating the deviation caused by the predictor from the average using the penalized least squares estimation (Irizarry 2022, Koren 2009). Thereafter, the algorithms were tested on the remaining 10% of the edx set (test set) for the the RMSE of their predicted ratings from the actual ones. The RMSE was the preferred measure of error as it results in the same units (Irizarry 2022).
 
 There exists the more convenient lm function that can automatically train the algorithms and produce the least squares estimates for their linear modeling. However, it comes with the constraint of time and/or computer capability with a dataset of this scale and was not be used for this project (Irizarry 2022).
 
@@ -514,10 +514,10 @@ include_graphics("fig11.png") # shows console output from the R script because i
 ```
 
 
-### _Algorithm 6: Average Rating $\mu$ + Regularized Movie Bias $rb_i$ + User Bias $rb_u$ + Age Bias $rb_a$_
+### _Algorithm 6: Average Rating $\mu$ + Regularized (Movie Bias $rb_i$ + User Bias $rb_u$ + Age Bias $rb_a$_)
 
 
-The biases in Algorithm 5 were adjusted for the number of ratings using regularization, which penalizes big estimates from small sample sizes with $\lambda$ and avoids overfitting of the algorithm (Koren 2008, 427; Koren 2009, 2). Cross-validation resulted in a $\lambda$ of 5.3. This was used for the regularization of the movie bias and those of other predictors, which refined the RMSE to 0.86353 (tab. 1).
+The movie bias and those of other predictors in Algorithm 5 were adjusted for the number of ratings using regularization, which penalizes big estimates from small sample sizes with $\lambda$ and avoids overfitting of the algorithm (Koren 2008, 427; Koren 2009, 2). Cross-validation resulted in a $\lambda$ of 5.3. This was used for the regularization of the biases, which refined the RMSE to 0.86353 (tab. 1).
 
 ```{r}
 # we skip the lambda cross-validation in the R script for faster knitting
@@ -573,7 +573,11 @@ include_graphics("fig12.png") # shows console output from the R script because i
 ## Recommendation System
 
 
-The final algorithm and recommendation system was evaluated on the reserved 10% of the MovieLens 10M Dataset, the final holdout test set. This simulated the movie rating prediction of the recommendation system on future data and resulted in a decent RMSE of 0.86469 (tab. 1).
+The final Algorithm 6 formed the recommendation system for this project. It predicted ratings ($r_p$) starting with an average rating 3.5124 then additionally adjusting for the effects of the movie, user and age biases that were regularized with a $\lambda$ of 5.3: $r_p = 3.5124 + rb_i + rb_u + rb_a$. The movie and user biases accounted for majority of the effects, similar to what was observed in previous data (Koren 2008, 427). Nevertheless, the age bias helped achieve an RMSE of 0.86353.
+
+A previous project by McGinnis (2019) similarly reviewed the use of movie age and relative age in recommendation systems. However, the pattern used to extract the years of releases from the titles yielded erroneous years. Both movie age and relative age were not used in the final algorithm.
+
+Finally, the recommendation system was evaluated on the reserved final holdout test set to simulated the movie rating prediction of the recommendation system on future data. This resulted in a decent RMSE of 0.86469, which is below the required RMSE of 0.86490 (tab. 1). 
 
 ```{r, echo = TRUE}
 recommendation_rating <- final_holdout_test |>
@@ -586,7 +590,7 @@ recommendation_rating <- final_holdout_test |>
   mutate(year_rat = year(time)) |>
   mutate(rel_age = year_rat - year_rel) |>
   left_join(r_ba_tibble, by = "rel_age") |>
-  mutate(recommendation_rating = mu + r_bi + r_bu + r_ba) |>
+  mutate(recommendation_rating = 3.5124 + r_bi + r_bu + r_ba) |>
   pull(recommendation_rating)
 recommendation_rmse <- rmse(final_holdout_test$rating, recommendation_rating)
 recommendation_rmse
@@ -598,34 +602,10 @@ kable(rmse_tibble, caption = "Root mean squared errors (RMSEs) of the algorithms
 ```
 
 
-
-
-
-
-
-
-
-
 ## Conclusion
 
 
->As with the final algorithm, this project produced a recommendation system that predicts furture
-
-
-
->"In this paper, we suggested methods that lower the RMSE to 0.8870."
-
-
->"However, they are entered manually, so errors and inconsistencies may exist." (GroupLens, n.d.)
-
-
-><LIMIT: RECURRING TIME>
-
-
-><INTERESTING NOTE: COVID YEARS>
-
-
->"in others our success is restricted by the randomness of the process, with movie recommendations for example." (Irizarry 2022)
+In this project, a content-based recommendation system that predicted future movie ratings of users with an RMSE rate of 0.86469 was developed from the MovieLens 10M Dataset. As with the Netflix challenge, the RMSE can be pushed down further using advanced methods, such as collaborative filtering of user-movie interactions. However, this goes beyond the scope of this project. It would be interesting to know if more predictor data has been added to the MovieLens dataset in 2020 to 2021, when most people were confined to their homes with their movies.
 
 
 ## Reference
@@ -633,24 +613,17 @@ kable(rmse_tibble, caption = "Root mean squared errors (RMSEs) of the algorithms
 
 GroupLens, n.d. "README.txt." Accessed May 29, 2023. [https://grouplens.org/datasets/movielens/10m/](https://grouplens.org/datasets/movielens/10m/).
 
-
 Harper, F. Maxwell, and Joseph A. Konstan. 2015. "The MovieLens Datasets: History and Context." _ACM Transactions on Interactive Intelligent Systems_ 5, no. 4: 1-19. [https://doi.org/10.1145/2827872](https://doi.org/10.1145/2827872).
-
 
 Irizarry, Rafael A. 2002. _Introduction to Data Science: Data Analysis and Prediction Algorithms with R_. [http://rafalab.dfci.harvard.edu/dsbook/](http://rafalab.dfci.harvard.edu/dsbook/).
 
-
 Koren, Yehuda. 2008. "Factorization Meets the Neighborhood: a Multifaceted Collaborative Filtering Model." [https://people.engr.tamu.edu/huangrh/Spring16/papers_course/matrix_factorization.pdf](https://people.engr.tamu.edu/huangrh/Spring16/papers_course/matrix_factorization.pdf).
-
 
 Koren, Yehuda. 2009. "The BellKor Solution to the Netflix Grand Prize." [https://www2.seas.gwu.edu/~simhaweb/champalg/cf/papers/KorenBellKor2009.pdf](https://www2.seas.gwu.edu/~simhaweb/champalg/cf/papers/KorenBellKor2009.pdf).
 
-
-Madhugiri, Devashree. 2022. "Top 7 Packages for Making Beautiful Tables in R." [https://towardsdatascience.com/top-7-packages-for-making-beautiful-tables-in-r-7683d054e541](https://towardsdatascience.com/top-7-packages-for-making-beautiful-tables-in-r-7683d054e541).
-
+McGinnis, Cynthia. 2019. "Movielens Capstone Project HarvardX." [https://rstudio-pubs-static.s3.amazonaws.com/465926_4c1ea901de9f4ce6a1969175080d6cc9.html](https://rstudio-pubs-static.s3.amazonaws.com/465926_4c1ea901de9f4ce6a1969175080d6cc9.html).
 
 Rocca, Baptiste. 2019. "Introduction to Recommender Systems." [https://towardsdatascience.com/introduction-to-recommender-systems-6c66cf15ada](https://towardsdatascience.com/introduction-to-recommender-systems-6c66cf15ada).
-
 
 Van Buskirk, Eliot. 2009. "BellKor’s Pragmatic Chaos Wins $1 Million Netflix Prize by Mere Minutes." [https://www.wired.com/2009/09/bellkors-pragmatic-chaos-wins-1-million-netflix-prize/](https://www.wired.com/2009/09/bellkors-pragmatic-chaos-wins-1-million-netflix-prize/).
 

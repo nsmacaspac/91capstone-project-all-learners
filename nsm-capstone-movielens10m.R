@@ -282,7 +282,7 @@ rmse_tibble <- tibble(Algorithm = "Baseline: Average Rating", RMSE = baseline_rm
 
 
 
-# we train and test algorithm 1: average rating mu + movie bias bi
+# we train and test Algorithm 1: average rating mu + movie bias bi
 
 bi_tibble <- train_set |>
   group_by(movieId) |>
@@ -307,7 +307,7 @@ rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "1: Average Rating + Movie 
 
 
 
-# we train and test algorithm 2: average rating mu + movie bias bi + genre bias bg
+# we train and test Algorithm 2: average rating mu + movie bias bi + genre bias bg
 
 bg_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
@@ -423,7 +423,7 @@ rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "2: Average Rating + Movie 
 
 
 
-# we train and test algorithm 3: average rating mu + movie bias bi + release bias br
+# we train and test Algorithm 3: average rating mu + movie bias bi + release bias br
 
 br_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
@@ -457,7 +457,7 @@ rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "3: Average Rating + Movie 
 
 
 
-# we train and test algorithm 4: average rating mu + movie bias bi + user bias bu
+# we train and test Algorithm 4: average rating mu + movie bias bi + user bias bu
 
 bu_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
@@ -486,7 +486,7 @@ rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "4: Average Rating + Movie 
 
 
 
-# we train and test algorithm 5: average rating mu + movie bias bi + user bias bu + age bias ba
+# we train and test Algorithm 5: average rating mu + movie bias bi + user bias bu + age bias ba
 
 ba_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
@@ -524,7 +524,7 @@ algorithm5_rmse
 # [1] 0.86414 # lower than algorithm4_rmse and the required rmse
 rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "5: Average Rating + Movie Bias + User Bias + Age Bias", RMSE = algorithm5_rmse))
 
-# we evaluate algorithm 5 based on the the top movies predicted by its movie bias bi
+# we evaluate Algorithm 5 based on the the top movies predicted by its movie bias bi
 
 title_tibble <- edx |>
   as_tibble() |>
@@ -558,11 +558,11 @@ train_set |> # fig11 in the Rmd file
 # 9  Who's Singin' Over There? (a.k.a. Who Sings Over There) (Ko to tamo peva) (1980) 1.237613 4
 # 10                            Human Condition III, The (Ningen no joken III) (1961) 1.237613 4
 # questionable and with very low numbers of ratings
-# we adjust biases in algorithm 5 for the number of ratings using regularization
+# we adjust the movie bias and those of other predictors in Algorithm 5 for the number of ratings using regularization
 
 
 
-# we train and test algorithm 6: average rating mu + regularized movie bias r_bi + user bias r_bu + age bias r_ba
+# we train and test Algorithm 6: average rating mu + regularized movie bias r_bi + user bias r_bu + age bias r_ba
 
 # we find the lambda that minimizes the RMSE using cross-validation
 
@@ -640,7 +640,7 @@ algorithm6_rmse
 # [1] 0.86353 # lower than the algorithm5_rmse and the required rmse
 rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "6: Average Rating + Regularized (Movie Bias + User Bias + Age Bias)", RMSE = algorithm6_rmse))
 
-# we evaluate algorithm 6 based on the the top movies predicted by its regularized movie bias r_bi
+# we evaluate Algorithm 6 based on the the top movies predicted by its regularized movie bias r_bi
 
 train_set |> # fig12 in the Rmd file
   count(movieId) |>
@@ -668,7 +668,7 @@ train_set |> # fig12 in the Rmd file
 
 
 
-# we use the final_holdout_test set to evaluate the final algorithm and recommendation system
+# we use the final_holdout_test set to evaluate the final Algorithm 6 and recommendation system
 
 recommendation_rating <- final_holdout_test |>
   left_join(r_bi_tibble, by = "movieId") |>
@@ -680,7 +680,7 @@ recommendation_rating <- final_holdout_test |>
   mutate(year_rat = year(time)) |>
   mutate(rel_age = year_rat - year_rel) |>
   left_join(r_ba_tibble, by = "rel_age") |>
-  mutate(recommendation_rating = mu + r_bi + r_bu + r_ba) |>
+  mutate(recommendation_rating = 3.5124 + r_bi + r_bu + r_ba) |>
   pull(recommendation_rating)
 recommendation_rmse <- rmse(final_holdout_test$rating, recommendation_rating)
 recommendation_rmse
