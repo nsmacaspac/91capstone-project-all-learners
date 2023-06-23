@@ -120,7 +120,7 @@ str(final_holdout_test)
 
 
 
-# USER PREFERENCE
+# USER PREFERENCES
 
 
 
@@ -228,7 +228,7 @@ edx_figure10 <- edx[sample_index,] |>
   mutate(rel_age = year_rat - year_rel) |>
   ggplot(aes(rel_age, userId)) +
   geom_point(aes(color = rating)) +
-  xlab("Relative Age of the Movie") +
+  xlab("Relative Age") +
   ylab("User Identification Number") +
   scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue")
 edx_figure10
@@ -236,7 +236,7 @@ edx_figure10
 
 
 
-# CONTENT-BASED ALGORITHM
+# CONTENT-BASED ALGORITHMS
 
 
 
@@ -274,11 +274,11 @@ mu
 # [1] 3.5124
 baseline_rmse <- rmse(test_set$rating, mu)
 baseline_rmse
-# [1] 1.0593 # serves as the basis of comparison for the rmse of the succeeding algorithms
+# [1] 1.0593 # serves as the basis of comparison for the RMSE of the succeeding algorithms
 
 # we tabulate the RMSEs
 
-rmse_tibble <- tibble(Algorithm = "Baseline: Average Rating", RMSE = baseline_rmse)
+rmse_tibble <- tibble(algorithm = "Baseline Algorithm: Average Rating", RMSE = baseline_rmse)
 
 
 
@@ -303,7 +303,7 @@ algorithm1_rating <- test_set |>
 algorithm1_rmse <- rmse(test_set$rating, algorithm1_rating)
 algorithm1_rmse
 # [1] 0.94292 # lower than baseline_rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "1: Average Rating + Movie Bias", RMSE = algorithm1_rmse))
+rmse_tibble <- rbind(rmse_tibble, tibble(algorithm = "Algorithm 1: Average Rating + Movie Bias", RMSE = algorithm1_rmse))
 
 
 
@@ -333,54 +333,54 @@ algorithm2_rmse
 
 # we retrain and retest using only the top-rated genre of each genre combination
 
-genre_vector <- c("Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror",  "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western") # from https://files.grouplens.org/datasets/movielens/ml-10m-README.html
+genre_vector <- c("Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror",  "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western") # from https://files.grouplens.org/datasets/movielens/ml-10m-README.html)
 genre_rating <- sapply(genre_vector, function(g){
-  train_set_a <- train_set |> filter(str_detect(genres, g) == TRUE)
+  train_set_a <- train_set |> filter(genres == g)
   mean(train_set_a$rating)
 })
-genre_tibble <- tibble(genre = genre_vector, rating = genre_rating) |> arrange(-rating) # arranges the genres according to decreasing rating
+genre_tibble <- tibble(genre = genre_vector, rating = genre_rating) |> arrange(-rating) # arranges the individual genres according to decreasing rating
 genre_tibble
-# A tibble: 18 × 2
+# # A tibble: 18 × 2
 #   genre       rating
 #   <chr>        <dbl>
-# 1 Film-Noir     4.01
-# 2 Documentary   3.78
-# 3 War           3.78
-# 4 Mystery       3.68
-# 5 Drama         3.67
-# 6 Crime         3.67
-# 7 Animation     3.60
-# 8 Musical       3.56
-# 9 Western       3.55
-# 10 Romance       3.55
-# 11 Thriller      3.51
-# 12 Fantasy       3.50
-# 13 Adventure     3.49
-# 14 Comedy        3.44
-# 15 Action        3.42
-# 16 Children      3.42
-# 17 Sci-Fi        3.40
-# 18 Horror        3.27
+# 1 Film-Noir     3.83
+# 2 Documentary   3.82
+# 3 Drama         3.71
+# 4 War           3.67
+# 5 Western       3.53
+# 6 Thriller      3.53
+# 7 Fantasy       3.48
+# 8 Musical       3.44
+# 9 Romance       3.26
+# 10 Comedy        3.24
+# 11 Crime         3.22
+# 12 Mystery       3.04
+# 13 Animation     3.01
+# 14 Adventure     2.94
+# 15 Action        2.94
+# 16 Sci-Fi        2.93
+# 17 Horror        2.88
+# 18 Children      2.46
 bg_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
   mutate(t_genre = case_when(str_detect(genres, "Film-Noir") ~ "Film-Noir",
                              str_detect(genres, "Documentary") ~ "Documentary",
-                             str_detect(genres, "War") ~ "War",
-                             str_detect(genres, "Mystery") ~ "Mystery",
                              str_detect(genres, "Drama") ~ "Drama",
-                             str_detect(genres, "Crime") ~ "Crime",
-                             str_detect(genres, "Animation") ~ "Animation",
-                             str_detect(genres, "Musical") ~ "Musical",
+                             str_detect(genres, "War") ~ "War",
                              str_detect(genres, "Western") ~ "Western",
-                             str_detect(genres, "Romance") ~ "Romance",
                              str_detect(genres, "Thriller") ~ "Thriller",
                              str_detect(genres, "Fantasy") ~ "Fantasy",
-                             str_detect(genres, "Adventure") ~ "Adventure",
+                             str_detect(genres, "Musical") ~ "Musical",
+                             str_detect(genres, "Romance") ~ "Romance",
                              str_detect(genres, "Comedy") ~ "Comedy",
+                             str_detect(genres, "Crime") ~ "Crime",
+                             str_detect(genres, "Mystery") ~ "Mystery",
+                             str_detect(genres, "Animation") ~ "Animation",
+                             str_detect(genres, "Adventure") ~ "Adventure",
                              str_detect(genres, "Action") ~ "Action",
-                             str_detect(genres, "Children") ~ "Children",
                              str_detect(genres, "Sci-Fi") ~ "Sci-Fi",
-                             str_detect(genres, "Horror") ~ "Horror")) |>
+                             str_detect(genres, "Horror") ~ "Horror",
+                             str_detect(genres, "Children") ~ "Children")) |>
   group_by(t_genre) |>
   summarize(bg = mean(rating - mu - bi))
 head(bg_tibble, n = 5)
@@ -388,37 +388,37 @@ head(bg_tibble, n = 5)
 #   t_genre          bg
 #   <chr>         <dbl>
 # 1 Action     2.34e-16
-# 2 Adventure  2.60e-15
-# 3 Animation  3.45e-15
-# 4 Children  -1.71e-16
-# 5 Comedy     1.10e-15
+# 2 Adventure  1.59e-15
+# 3 Animation  1.12e-15
+# 4 Children  -3.04e-16
+# 5 Comedy     2.83e-15
 algorithm2_rating <- test_set |>
   left_join(bi_tibble, by = "movieId") |>
   mutate(t_genre = case_when(str_detect(genres, "Film-Noir") ~ "Film-Noir",
                              str_detect(genres, "Documentary") ~ "Documentary",
-                             str_detect(genres, "War") ~ "War",
-                             str_detect(genres, "Mystery") ~ "Mystery",
                              str_detect(genres, "Drama") ~ "Drama",
-                             str_detect(genres, "Crime") ~ "Crime",
-                             str_detect(genres, "Animation") ~ "Animation",
-                             str_detect(genres, "Musical") ~ "Musical",
+                             str_detect(genres, "War") ~ "War",
                              str_detect(genres, "Western") ~ "Western",
-                             str_detect(genres, "Romance") ~ "Romance",
                              str_detect(genres, "Thriller") ~ "Thriller",
                              str_detect(genres, "Fantasy") ~ "Fantasy",
-                             str_detect(genres, "Adventure") ~ "Adventure",
+                             str_detect(genres, "Musical") ~ "Musical",
+                             str_detect(genres, "Romance") ~ "Romance",
                              str_detect(genres, "Comedy") ~ "Comedy",
+                             str_detect(genres, "Crime") ~ "Crime",
+                             str_detect(genres, "Mystery") ~ "Mystery",
+                             str_detect(genres, "Animation") ~ "Animation",
+                             str_detect(genres, "Adventure") ~ "Adventure",
                              str_detect(genres, "Action") ~ "Action",
-                             str_detect(genres, "Children") ~ "Children",
                              str_detect(genres, "Sci-Fi") ~ "Sci-Fi",
-                             str_detect(genres, "Horror") ~ "Horror")) |>
+                             str_detect(genres, "Horror") ~ "Horror",
+                             str_detect(genres, "Children") ~ "Children")) |>
   left_join(bg_tibble, by = "t_genre") |>
   mutate(algorithm2_rating = mu + bi + bg) |>
   pull(algorithm2_rating)
 algorithm2_rmse <- rmse(test_set$rating, algorithm2_rating)
 algorithm2_rmse
 # [1] 0.94292 # still the same as the algorithm1_rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "2: Average Rating + Movie Bias + Genre Bias", RMSE = algorithm2_rmse))
+rmse_tibble <- rbind(rmse_tibble, tibble(algorithm = "Algorithm 2: Average Rating + Movie Bias + Genre Bias", RMSE = algorithm2_rmse))
 # we replace genre with year of release as another possible predictor
 
 
@@ -452,7 +452,7 @@ algorithm3_rating <- test_set |>
 algorithm3_rmse <- rmse(test_set$rating, algorithm3_rating)
 algorithm3_rmse
 # [1] 0.94292 # same as the algorithm1_rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "3: Average Rating + Movie Bias + Release Bias", RMSE = algorithm3_rmse))
+rmse_tibble <- rbind(rmse_tibble, tibble(algorithm = "Algorithm 3: Average Rating + Movie Bias + Release Bias", RMSE = algorithm3_rmse))
 # we replace year of release with user as another possible predictor
 
 
@@ -479,14 +479,14 @@ algorithm4_rating <- test_set |>
   pull(algorithm4_rating)
 algorithm4_rmse <- rmse(test_set$rating, algorithm4_rating)
 algorithm4_rmse
-# [1] 0.86458 # lower than the algorithm1_rmse and the required rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "(Requirement)", RMSE = 0.86490))
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "4: Average Rating + Movie Bias + User Bias", RMSE = algorithm4_rmse))
+# [1] 0.86458 # lower than the algorithm1_rmse and the required RMSE
+rmse_tibble <- rbind(rmse_tibble, tibble(algorithm = "(Requirement)", RMSE = 0.86490))
+rmse_tibble <- rbind(rmse_tibble, tibble(algorithm = "Algorithm 4: Average Rating + Movie Bias + User Bias", RMSE = algorithm4_rmse))
 # we add relative age of the movie as another possible predictor
 
 
 
-# we train and test Algorithm 5: average rating mu + movie bias bi + user bias bu + age bias ba
+# we train and test Algorithm 5: average rating mu + movie bias bi + user bias bu + relative age bias ba
 
 ba_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
@@ -521,8 +521,8 @@ algorithm5_rating <- test_set |>
   pull(algorithm5_rating)
 algorithm5_rmse <- rmse(test_set$rating, algorithm5_rating)
 algorithm5_rmse
-# [1] 0.86414 # lower than algorithm4_rmse and the required rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "5: Average Rating + Movie Bias + User Bias + Age Bias", RMSE = algorithm5_rmse))
+# [1] 0.86414 # lower than algorithm4_rmse and the required RMSE
+rmse_tibble <- rbind(rmse_tibble, tibble(algorithm = "Algorithm 5: Average Rating + Movie Bias + User Bias + Relative Age Bias", RMSE = algorithm5_rmse))
 
 # we evaluate Algorithm 5 based on the the top movies predicted by its movie bias bi
 
@@ -562,7 +562,7 @@ train_set |> # fig11 in the Rmd file
 
 
 
-# we train and test Algorithm 6: average rating mu + regularized movie bias r_bi + user bias r_bu + age bias r_ba
+# we train and test Algorithm 6: average rating mu + regularized (movie bias r_bi + user bias r_bu + relative age bias r_ba)
 
 # we find the lambda that minimizes the RMSE using cross-validation
 
@@ -637,8 +637,8 @@ algorithm6_rating <- test_set |>
   pull(algorithm6_rating)
 algorithm6_rmse <- rmse(test_set$rating, algorithm6_rating)
 algorithm6_rmse
-# [1] 0.86353 # lower than the algorithm5_rmse and the required rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "6: Average Rating + Regularized (Movie Bias + User Bias + Age Bias)", RMSE = algorithm6_rmse))
+# [1] 0.86353 # lower than the algorithm5_rmse and the required RMSE
+rmse_tibble <- rbind(rmse_tibble, tibble(algorithm = "Algorithm 6: Average Rating + Regularized (Movie Bias + User Bias + Relative Age Bias)", RMSE = algorithm6_rmse))
 
 # we evaluate Algorithm 6 based on the the top movies predicted by its regularized movie bias r_bi
 
@@ -684,9 +684,9 @@ recommendation_rating <- final_holdout_test |>
   pull(recommendation_rating)
 recommendation_rmse <- rmse(final_holdout_test$rating, recommendation_rating)
 recommendation_rmse
-# [1] 0.86469 # lower than the required rmse
-rmse_tibble <- rbind(rmse_tibble, tibble(Algorithm = "Recommendation System", RMSE = recommendation_rmse))
+# [1] 0.86469 # lower than the required RMSE
+rmse_tibble <- rbind(rmse_tibble, tibble(algorithm = "Recommendation System", RMSE = recommendation_rmse))
 if(!require(knitr)) install.packages("knitr", repos = "http://cran.us.r-project.org")
 library(knitr)
-kable(rmse_tibble, caption = "Root mean squared errors (RMSEs) of the algorithms.") # tab1 in the Rmd file
+kable(rmse_tibble, col.names = c("", "RMSE"), caption = "Root mean squared errors (RMSEs) of the algorithms and the recommendation system.") # tab1 in the Rmd file
 
