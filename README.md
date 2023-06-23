@@ -4,7 +4,7 @@
 ## Instructions
 
 
-1. Clone the repository, including fig1.png, fig11.png, and fig12.png.
+1. Clone the GitHub repository https://github.com/nsmacaspac/91capstone-project-all-learners.git, including fig1.png, fig11.png, and fig12.png.
 
 2. If you understand some codes, read the nsm-capstone-movielens10m.pdf.
 
