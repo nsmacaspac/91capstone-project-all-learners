@@ -126,7 +126,7 @@ str(final_holdout_test)
 
 # we use the edx set to examine user preferences
 
-set.seed(2, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
+set.seed(2, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during assessment
 # set.seed(2) # if using R 3.5 or earlier
 sample_index <- sample(1:nrow(edx), 1000)
 edx_figure2 <- edx[sample_index,] |>
@@ -160,7 +160,7 @@ edx_figure4 <- edx[sample_index,] |>
 edx_figure4
 # users are inclined toward movies from the 1990s to 2000s
 
-set.seed(6, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
+set.seed(6, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(6) # if using R 3.5 or earlier
 sample_index <- sample(1:nrow(edx), 25)
 edx_figure5 <- edx[sample_index,] |>
@@ -175,7 +175,7 @@ edx_figure5
 
 if(!require(lubridate)) install.packages("lubridate", repos = "http://cran.us.r-project.org")
 library(lubridate)
-set.seed(7, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
+set.seed(7, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(7) # if using R 3.5 or earlier
 sample_index <- sample(1:nrow(edx), 1000)
 edx_figure6 <- edx[sample_index,] |>
@@ -243,7 +243,7 @@ edx_figure10
 # we use the edx set to train and test content-based algorithms
 
 options(digits = 5)
-set.seed(10, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
+set.seed(10, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(10) # if using R 3.5 or earlier
 test_index <- createDataPartition(edx$rating, p = 0.1, list = FALSE)
 train_set <- edx[-test_index,]
@@ -380,7 +380,7 @@ bg_tibble <- train_set |>
                              str_detect(genres, "Action") ~ "Action",
                              str_detect(genres, "Sci-Fi") ~ "Sci-Fi",
                              str_detect(genres, "Horror") ~ "Horror",
-                             str_detect(genres, "Children") ~ "Children")) |>
+                             str_detect(genres, "Children") ~ "Children")) |> # extracts the top-rated genre of each genre combination
   group_by(t_genre) |>
   summarize(bg = mean(rating - mu - bi))
 head(bg_tibble, n = 5)
@@ -687,6 +687,5 @@ recommendation_rmse
 # [1] 0.86469 # lower than the required RMSE
 rmse_tibble <- rbind(rmse_tibble, tibble(algorithm = "Recommendation System", RMSE = recommendation_rmse))
 if(!require(knitr)) install.packages("knitr", repos = "http://cran.us.r-project.org")
-library(knitr)
 kable(rmse_tibble, col.names = c("", "RMSE"), caption = "Root mean squared errors (RMSEs) of the algorithms and the recommendation system.") # tab1 in the Rmd file
 

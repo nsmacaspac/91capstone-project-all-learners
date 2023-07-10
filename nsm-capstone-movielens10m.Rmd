@@ -7,7 +7,7 @@ output: pdf_document
 
 
 ```{r setup, include = FALSE}
-if(!require(knitr)) install.packages("knitr", repos = "http://cran.us.r-project.org")
+if(!require(knitr)) install.packages("knitr", repos = "http://cran.us.r-project.org") # require() checks if the package exists
 library(knitr)
 opts_chunk$set(
 	echo = FALSE,
@@ -25,7 +25,7 @@ opts_chunk$set(
 
 The Big Tech companies use recommendation systems to provide customized suggestions of products to users (Koren 2008, 426; Rocca 2019). These algorithms aim to enhance user experience and build customer loyalty (Koren 2008, 426). They are commonly developed using content-based methods founded on user and product information and collaborative filtering methods based on user-product interactions (Rocca 2019).
 
-In 2006, the streaming service company Netflix offered USD 1,000,000 to any team that managed to come up with an algorithm that improved on their internal recommendation system, Cinematch, by 10% or more. The hybrid team of KorBell, Big Chaos, and Pragmatic Chaos - Bell-Kor's Pragmatic Chaos - won the challenge (Van Buskirk 2009). The team utilized advanced methods of collaborative filtering, restricted Boltzmann machine, and gradient-boosted decision trees, yet Koren (2008, 434; 2009, 9) of team KorBell emphasized the significance of content information from the baseline predictors in capturing the main biases in the dataset and refining the prediction of the algorithm.
+In 2006, the streaming service company Netflix offered USD 1,000,000 to any team that managed to come up with a machine learning algorithm that improved on their internal recommendation system, Cinematch, by 10% or more. The hybrid team of KorBell, Big Chaos, and Pragmatic Chaos - Bell-Kor's Pragmatic Chaos - won the challenge (Van Buskirk 2009). The team utilized advanced methods of collaborative filtering, restricted Boltzmann machine, and gradient-boosted decision trees, yet Koren (2008, 434; 2009, 9) of team KorBell emphasized the significance of content information from the baseline predictors in capturing the main biases in the dataset and refining the prediction of the algorithm.
 
 Following this lead, this project aims to develop a modest recommendation system that is based on content information from baseline predictors in a similar dataset of the movie recommender MovieLens and that predicts future movie ratings of users with a root mean squared error (RMSE) rate of less than 0.86490. In the succeeding sections, we examine the dataset and user preferences then subsequently build algorithms to develop the recommendation system.
 
@@ -38,7 +38,7 @@ This undertaking is part of the capstone in the [Professional Certificate Progra
 The [MovieLens 10M Dataset](https://grouplens.org/datasets/movielens/10m/) was composed of 10,000,054 movie ratings from users with 20 ratings or more (GroupLens, n.d.; Harper and Konstan 2015). The dataset was downloaded and subjected to wrangling using an initial code in the language R provided by Harvard Online, which standardized its formatting and partitioning into 90% edx set and 10% final holdout test set across all projects.
 
 ```{r}
-if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org") # require() checks if the package exists
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
 if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
 
 library(tidyverse)
@@ -126,7 +126,7 @@ The interactions of the contents of the edx set were visualized using ggplot2 fu
 A plot of user ratings against movieIds of a random sample of the data showed an aggregation of the ratings on a number of movieIds (fig. 2). This indicated the tendency of users to rate certain movies more than others and consequently imparted which movies are popular.
   
 ```{r fig2, fig.cap = "Scatterplot of user ratings vs movies of a random sample of the edx set."}
-set.seed(2, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
+set.seed(2, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during assessment
 # set.seed(2) # if using R 3.5 or earlier
 sample_index <- sample(1:nrow(edx), 1000)
 edx_figure2 <- edx[sample_index,] |>
@@ -177,7 +177,7 @@ edx_figure4
 A simple bar chart of average user ratings of a random sample of the data showed the tendencies for certain users to give a generous average rating of 5 (fig. 5).  On the other hand, some users gave a stingy average rating of 1.
 
 ```{r fig5, fig.cap = "Bar chart of average user ratings of a random sample of the edx set."}
-set.seed(6, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
+set.seed(6, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(6) # if using R 3.5 or earlier
 sample_index <- sample(1:nrow(edx), 25)
 edx_figure5 <- edx[sample_index,] |>
@@ -199,7 +199,7 @@ Timestamps in Unix time implicitly contained the dates and times when the rating
 ```{r fig6, fig.cap = "Scatterplot of user ratings per hour of the day of a random sample of the edx set."}
 if(!require(lubridate)) install.packages("lubridate", repos = "http://cran.us.r-project.org")
 library(lubridate)
-set.seed(7, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
+set.seed(7, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(7) # if using R 3.5 or earlier
 sample_index <- sample(1:nrow(edx), 1000)
 edx_figure6 <- edx[sample_index,] |>
@@ -254,7 +254,7 @@ Unlike hours, days, and months, the years of rating are not recurring units of t
 
 ```{r fig10, fig.cap = "Scatterplot of user ratings vs relative ages of movies of a random sample of the edx set."}
 edx_figure10 <- edx[sample_index,] |>
-  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
+  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |> # simplifies extraction of the year of release because of the presence of multiple () in the titles
   mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
   mutate(year_rel = as.integer(year_rel)) |>
   mutate(time = as_datetime(timestamp)) |>
@@ -278,7 +278,7 @@ There is a more convenient lm function that can automatically train the algorith
 
 ```{r}
 options(digits = 5)
-set.seed(10, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during peer assessment
+set.seed(10, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(10) # if using R 3.5 or earlier
 test_index <- createDataPartition(edx$rating, p = 0.1, list = FALSE)
 train_set <- edx[-test_index,]
@@ -377,7 +377,7 @@ bg_tibble <- train_set |>
                              str_detect(genres, "Action") ~ "Action",
                              str_detect(genres, "Sci-Fi") ~ "Sci-Fi",
                              str_detect(genres, "Horror") ~ "Horror",
-                             str_detect(genres, "Children") ~ "Children")) |>
+                             str_detect(genres, "Children") ~ "Children")) |> # extracts the top-rated genre of each genre combination
   group_by(t_genre) |>
   summarize(bg = mean(rating - mu - bi))
 head(bg_tibble, n = 5)
@@ -421,7 +421,7 @@ The Algorithm 1 predicted ratings were updated with the deviation from the avera
 ```{r, echo = TRUE}
 br_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
-  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
+  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |> # simplifies extraction of the year of release because of the presence of multiple () in the titles
   mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
   mutate(year_rel = as.integer(year_rel)) |>
   group_by(year_rel) |>
@@ -479,7 +479,8 @@ The Algorithm 4 predicted ratings were enhanced by adding the deviation from the
 ba_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
   left_join(bu_tibble, by = "userId") |>
-  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>  mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
+  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |> # simplifies extraction of the year of release because of the presence of multiple () in the titles
+  mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
   mutate(year_rel = as.integer(year_rel)) |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(year_rat = year(time)) |>
@@ -535,7 +536,7 @@ r_bu_tibble <- train_set |>
 r_ba_tibble <- train_set |>
   left_join(r_bi_tibble, by = "movieId") |>
   left_join(r_bu_tibble, by = "userId") |>
-  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
+  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |> # simplifies extraction of the year of release because of the presence of multiple () in the titles
   mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
   mutate(year_rel = as.integer(year_rel)) |>
   mutate(time = as_datetime(timestamp)) |>
@@ -581,7 +582,7 @@ Finally, the recommendation system was evaluated on the reserved final holdout t
 recommendation_rating <- final_holdout_test |>
   left_join(r_bi_tibble, by = "movieId") |>
   left_join(r_bu_tibble, by = "userId") |>
-  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |>
+  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |> # simplifies extraction of the year of release because of the presence of multiple () in the titles
   mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
   mutate(year_rel = as.integer(year_rel)) |>
   mutate(time = as_datetime(timestamp)) |>
