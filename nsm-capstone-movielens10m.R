@@ -130,8 +130,8 @@ set.seed(2, sample.kind = "Rounding") # if using R 3.6 or later # for reproducib
 # set.seed(2) # if using R 3.5 or earlier
 sample_index <- sample(1:nrow(edx), 1000)
 edx_figure2 <- edx[sample_index,] |>
-  ggplot(aes(movieId, userId)) +
-  geom_point(aes(color = rating)) +
+  ggplot(aes(movieId, userId, color = rating)) +
+  geom_point() +
   xlab("Movie Identification Number") +
   ylab("User Identification Number") +
   scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue") # reverses the color gradient
@@ -139,8 +139,8 @@ edx_figure2
 # users tend to rate certain movies more than others
 
 edx_figure3 <- edx[sample_index,] |>
-  ggplot(aes(genres, userId)) +
-  geom_point(aes(color = rating)) +
+  ggplot(aes(genres, userId, color = rating)) +
+  geom_point() +
   theme(axis.text.x = element_text(size = 3, hjust = 1, vjust = 0.5, angle = 90)) +
   xlab("Genre") +
   ylab("User Identification Number") +
@@ -152,8 +152,8 @@ edx_figure4 <- edx[sample_index,] |>
   mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |> # simplifies extraction of the year of release because of the presence of multiple () in the titles
   mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
   mutate(year_rel = as.integer(year_rel)) |>
-  ggplot(aes(year_rel, userId)) +
-  geom_point(aes(color = rating)) +
+  ggplot(aes(year_rel, userId, color = rating)) +
+  geom_point() +
   xlab("Year of Release") +
   ylab("User Identification Number") +
   scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue")
@@ -181,8 +181,8 @@ sample_index <- sample(1:nrow(edx), 1000)
 edx_figure6 <- edx[sample_index,] |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(hour = hour(time)) |>
-  ggplot(aes(hour, userId)) +
-  geom_point(aes(color = rating)) +
+  ggplot(aes(hour, userId, color = rating)) +
+  geom_point() +
   xlab("Hour") +
   ylab("User Identification Number") +
   scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue")
@@ -191,8 +191,8 @@ edx_figure6
 edx_figure7 <- edx[sample_index,] |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(day_w = wday(time, label = TRUE, abbr = FALSE)) |>
-  ggplot(aes(day_w, userId)) +
-  geom_point(aes(color = rating)) +
+  ggplot(aes(day_w, userId, color = rating)) +
+  geom_point() +
   xlab("Day of the Week") +
   ylab("User Identification Number") +
   scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue")
@@ -201,8 +201,8 @@ edx_figure7
 edx_figure8 <- edx[sample_index,] |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(day_m = day(time)) |>
-  ggplot(aes(day_m, userId)) +
-  geom_point(aes(color = rating)) +
+  ggplot(aes(day_m, userId, color = rating)) +
+  geom_point() +
   xlab("Day of the Month") +
   ylab("User Identification Number") +
   scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue")
@@ -211,8 +211,8 @@ edx_figure8
 edx_figure9 <- edx[sample_index,] |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(month = month(time, label = TRUE, abbr = FALSE)) |>
-  ggplot(aes(month, userId)) +
-  geom_point(aes(color = rating)) +
+  ggplot(aes(month, userId, color = rating)) +
+  geom_point() +
   theme(axis.text.x = element_text(hjust = 1, vjust = 0.5, angle = 90)) +
   xlab("Month") +
   ylab("User Identification Number") +
@@ -226,8 +226,8 @@ edx_figure10 <- edx[sample_index,] |>
   mutate(time = as_datetime(timestamp)) |>
   mutate(year_rat = year(time)) |>
   mutate(rel_age = year_rat - year_rel) |>
-  ggplot(aes(rel_age, userId)) +
-  geom_point(aes(color = rating)) +
+  ggplot(aes(rel_age, userId, color = rating)) +
+  geom_point() +
   xlab("Relative Age") +
   ylab("User Identification Number") +
   scale_color_gradient(name = "Rating", low = "skyblue", high = "darkblue")
