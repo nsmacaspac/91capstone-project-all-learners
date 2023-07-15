@@ -126,8 +126,9 @@ str(final_holdout_test)
 
 # we use the edx set to examine user preferences
 
-set.seed(2, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during assessment
+set.seed(2, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(2) # if using R 3.5 or earlier
+# for reproducibility during assessment
 sample_index <- sample(1:nrow(edx), 1000)
 edx_figure2 <- edx[sample_index,] |>
   ggplot(aes(movieId, userId, color = rating)) +

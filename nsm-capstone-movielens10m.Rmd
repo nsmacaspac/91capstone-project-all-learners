@@ -126,8 +126,9 @@ The interactions of the contents of the edx set were visualized using ggplot2 fu
 A plot of user ratings against movieIds of a random sample of the data showed an aggregation of the ratings on a number of movieIds (fig. 2). This indicated the tendency of users to rate certain movies more than others and consequently imparted which movies are popular.
   
 ```{r fig2, fig.cap = "Scatterplot of user ratings vs movies of a random sample of the edx set."}
-set.seed(2, sample.kind = "Rounding") # if using R 3.6 or later # for reproducibility during assessment
+set.seed(2, sample.kind = "Rounding") # if using R 3.6 or later
 # set.seed(2) # if using R 3.5 or earlier
+# for reproducibility during assessment
 sample_index <- sample(1:nrow(edx), 1000)
 edx_figure2 <- edx[sample_index,] |>
   ggplot(aes(movieId, userId, color = rating)) +
