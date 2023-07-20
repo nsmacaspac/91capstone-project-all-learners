@@ -1,14 +1,16 @@
-# 91capstone-project-all-learners
+## 91capstone-project-all-learners
 
-## Instructions
+### Instructions
 
-1. Clone the repository.
+1. Update your R to version 4.3.
 
-2. Open the 91capstone-project-all-learners.RProj.
+2. Clone the repository.
 
-3. Read the nsm-capstone-movielens10m.pdf.
+3. Open the 91capstone-project-all-learners.RProj.
 
-4. If you are looking for codes that are unneccessary in the pdf file, refer to the nsm-capstone-movielens10m.Rmd.
+4. Read the nsm-capstone-movielens10m.pdf.
 
-5. If you are looking for codes that are unnecessary in the the Rmd file, refer to the nsm-capstone-movielens10m.R.
+5. If you are looking for codes that are unneccessary in the pdf file, refer to the nsm-capstone-movielens10m.Rmd.
+
+6. If you are looking for codes that are unnecessary in the the Rmd file, refer to the nsm-capstone-movielens10m.R.
 
