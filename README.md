@@ -1,6 +1,6 @@
-## 91capstone-project-all-learners
+### 91capstone-project-all-learners
 
-### Instructions
+#### Instructions
 
 1. Update your R to version 4.3.
 
