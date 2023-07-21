@@ -105,7 +105,7 @@ edx <- rbind(edx, removed)
 rm(dl, ratings, movies, test_index, temp, movielens, removed)
 ```
 
-The edx set was used to examine user preferences and to train and test content-based algorithms to develop the recommendation system. It contained 9,000,055 movie ratings, each with six variables: userId, movieId, rating, timestamp, title, and genres (fig. 1). UserIds and movieIds were unique to each of its 69,878 users and 10,677 movies, respectively.  Ratings ranged from 0.5 to 5 stars, and timestamps were rendered in Unix time. Titles were captured manually according to how they appear in the movie database IMDb and included the years of movie release. Lastly, the genres were comprised of 18 individual ones (GroupLens, n.d.).
+The edx set was used to examine user preferences and to train and test content-based algorithms to develop the recommendation system. It contained 9,000,055 movie ratings, each with six variables: userId, movieId, rating, timestamp, title, and genres (fig. 1). UserIds and movieIds were unique to each of its 69,878 users and 10,677 movies, respectively.  Ratings ranged from 0.5 to 5 stars, and timestamps were rendered in Unix time. Titles were captured manually according to how they appear in the movie database IMDb and included the years of movie release. Lastly, the genres were comprised of eighteen individual ones (GroupLens, n.d.).
 
 ```{r fig1, fig.cap = "First rows of the edx set."}
 include_graphics("fig1.png") # shows Console output from the R script because it does not knit nicely
