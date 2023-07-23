@@ -14,7 +14,7 @@ opts_chunk$set(
 	collapse = TRUE,
 	warning = FALSE,
 	message = FALSE,
-	out.width = "50%",
+	out.width = "60%",
 	fig.align = "center"
 )
 ```
