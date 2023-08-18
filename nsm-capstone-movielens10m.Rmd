@@ -378,7 +378,8 @@ bg_tibble <- train_set |>
                              str_detect(genres, "Action") ~ "Action",
                              str_detect(genres, "Sci-Fi") ~ "Sci-Fi",
                              str_detect(genres, "Horror") ~ "Horror",
-                             str_detect(genres, "Children") ~ "Children")) |> # extracts the top-rated genre of each genre combination
+                             str_detect(genres, "Children") ~ "Children")) |> # extracts 
+  # the top-rated genre of each genre combination
   group_by(t_genre) |>
   summarize(bg = mean(rating - mu - bi))
 head(bg_tibble, n = 5)
@@ -422,7 +423,8 @@ The Algorithm 1 predicted ratings were updated with the deviation from the avera
 ```{r, echo = TRUE}
 br_tibble <- train_set |>
   left_join(bi_tibble, by = "movieId") |>
-  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |> # simplifies extraction of the year of release because of the presence of multiple () in the titles
+  mutate(year_rel = str_extract(title, "\\(\\d{4}\\)$")) |> # simplifies extraction of 
+  # the year of release because of the presence of multiple () in the titles
   mutate(year_rel = str_replace_all(year_rel, "[:punct:]", "")) |>
   mutate(year_rel = as.integer(year_rel)) |>
   group_by(year_rel) |>
