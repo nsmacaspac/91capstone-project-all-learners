@@ -108,6 +108,7 @@ rm(dl, ratings, movies, test_index, temp, movielens, removed)
 The edx set was used to examine user preferences and to train and test content-based algorithms to develop the recommendation system. It contained 9,000,055 movie ratings, each with six variables: userId, movieId, rating, timestamp, title, and genres (fig. 1). UserIds and movieIds were unique to each of its 69,878 users and 10,677 movies, respectively.  Ratings ranged from 0.5 to 5 stars, and timestamps were rendered in Unix time. Titles were captured manually according to how they appear in the movie database IMDb and included the years of movie release. Lastly, the genres were comprised of eighteen individual ones (GroupLens, n.d.).
 
 ```{r fig1, fig.cap = "First rows of the edx set."}
+if(!file.exists("fig1.png")) download.file("https://raw.githubusercontent.com/nsmacaspac/91capstone-project-all-learners/main/fig1.png", "fig1.png")
 include_graphics("fig1.png") # shows Console output from the R script because it does not knit nicely
 ```
 
@@ -514,6 +515,7 @@ rmse_tibble <- rbind(rmse_tibble, tibble(algorithm = "Algorithm 5: Average Ratin
 Algorithm 5 was reviewed for the plausibility of the top movies predicted by its movie bias $b_i$ to ensure user confidence in the recommendations (Rocca 2019; Irizarry 2022). However, the top movies were questionable and came with very low numbers of ratings (fig. 11).
 
 ```{r fig11, fig.cap = "Top movies predicted by the movie bias $b_i$ of Algorithm 5."}
+if(!file.exists("fig11.png")) download.file("https://raw.githubusercontent.com/nsmacaspac/91capstone-project-all-learners/main/fig11.png", "fig11.png")
 include_graphics("fig11.png") # shows Console output from the R script because it does not knit nicely
 ```
 
@@ -570,6 +572,7 @@ rmse_tibble <- rbind(rmse_tibble, tibble(algorithm = "Algorithm 6: Average Ratin
 The top movies predicted by the regularized movie bias $rb_i$ of Algorithm 6 were more rational and came with very high numbers of ratings (fig. 12).
 
 ```{r fig12, fig.cap = "Top movies predicted by the regularized movie bias $rb_i$ of Algorithm 6."}
+if(!file.exists("fig12.png")) download.file("https://raw.githubusercontent.com/nsmacaspac/91capstone-project-all-learners/main/fig12.png", "fig12.png")
 include_graphics("fig12.png") # shows Console output from the R script because it does not knit nicely
 ```
 
